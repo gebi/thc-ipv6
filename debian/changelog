@@ -1,0 +1,23 @@
+thc-ipv6 (0.7-1) unstable; urgency=low
+
+  * New upstream release.
+  * Bumb Standard Version to 3.7.2 (no further changes).
+  * Clean up debian/rules.
+  * Add libpcap0.8-dev and gcc to build-depends.
+  * Add myself to uploaders.
+
+ -- Michael Prokop <mika@grml.org>  Wed, 29 Nov 2006 22:48:37 +0100
+
+thc-ipv6 (0.6-2) unstable; urgency=low
+
+  * Few package corrections
+  * Added manpages for packages
+
+ -- Michael Gebetsroither <michael.geb@gmx.at>  Wed, 28 Jun 2006 13:41:24 +0200
+
+thc-ipv6 (0.6-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Michael Gebetsroither <michael.geb@gmx.at>  Wed, 28 Jun 2006 12:07:38 +0200
+

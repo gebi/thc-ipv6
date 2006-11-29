@@ -1,0 +1,10 @@
+#!/bin/sh
+
+CURR=`pwd`
+
+#echo -n "dh_link "
+find -maxdepth 1 -perm 755 -type f |colrm 1 2 |while read i; do
+    #echo -e -n "\\ \nusr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/${i}.8.gz "
+    echo "dh_link usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/${i}.8.gz "
+done
+echo
