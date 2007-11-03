@@ -1,0 +1,3 @@
+version=3
+http://www.thc.org/thc-ipv6/index.html \
+    ../releases/thc-ipv6-(.*)\.tar\.gz

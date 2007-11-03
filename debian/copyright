@@ -1,0 +1,14 @@
+This package was debianized by Michael Gebetsroither <gebi@grml.org> on
+Tue, 30 Jan 2007 21:42:28 +0100.
+
+It was downloaded from http://www.thc.org/thc-ipv6/
+
+Upstream Author: van Hauser <vh@thc.org>
+
+Copyright: 2007 van Hauser, and possible other
+
+License: GPLv3
+As stated on the hp, see a copy in /usr/share/doc/thc-ipv6/thc-ipv6.html
+
+The Debian packaging is (C) 2007, Michael Gebetsroither <gebi@grml.org> and
+is licensed under the GPL, see `/usr/share/common-licenses/GPL'.

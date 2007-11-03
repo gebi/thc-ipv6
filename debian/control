@@ -1,0 +1,16 @@
+Source: thc-ipv6
+Section: net
+Priority: optional
+Maintainer: Michael Gebetsroither <gebi@grml.org>
+Uploaders: Michael Prokop <mika@grml.org>
+Build-Depends: debhelper (>= 5), libpcap0.8-dev, libssl-dev, dpatch
+Standards-Version: 3.7.2
+
+Package: thc-ipv6
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Tools to play with IPv6
+ A complete tool set to attack the inherent protocol weaknesses of IPV6
+ and ICMP6, and includes an easy to use packet factory library.
+ .
+  Homepage: http://www.thc.org/thc-ipv6/

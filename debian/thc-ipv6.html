@@ -1,0 +1,103 @@
+<HTML><HEAD><TITLE>THC-IPV6 - attacking the IPV6 protocol suite</TITLE></HEAD><BODY BGCOLOR="#FFFFFF"><PRE>
+
+ THC-IPV6
+
+ Last update 2006-10-24
+
+
+ A complete tool set to attack the inherent protocol weaknesses of IPV6
+ and ICMP6, and includes an easy to use packet factory library.
+ Download the current version here:
+ <a href="../releases/thc-ipv6-0.7.tar.gz">thc-ipv6-0.7.tar.gz</a>
+
+ Thanks a lot to all those conference organizers to make it possible for me
+ show my presentation all over the world:
+   * Pacsec, Tokyo, November 2005
+   * CCC Congress, Berlin, December 2005
+   * EuSecWest, London, February 2006
+   * CanSecWest, Vancouver, April 2006
+   * Hack in the Box, Kuala Lumpur, September 2006
+   * Hack LU, Luxembourg, October 2006
+ And here is - finally - the complete presentation for downloading: <a href="../papers/vh_thc-ipv6_attack.pdf">vh_thc-ipv6_attack.pdf</a>
+ Have fun!
+
+
+ [0x00] News and Changelog
+
+	CHANGELOG for 0.7:
+	###########
+	* Added sendpees6.c and a patch from willdamn(ad)gmail.com - thanks a lot!
+	  This is the 2nd public version, released during HITB 2006
+
+	Have fun!
+
+
+ [0x01] Introduction
+ 	Welcome to the mini website of the THC IPV6 project.
+
+	This code was inspired when I got into touch with IPv6, learned more and
+	more about it - and then found no tools to play (read: "hack") around with.
+	First I tried to implement things with libnet, but then found out that
+	the ipv6 implementation is only partial - and sucks. I tried to add the
+	missing code, but well, it was not so easy, hence I saved my time and
+	quickly wrote my own library.
+
+
+ [0x02] Disclaimer
+
+	1. This tool is for legal purposes only!
+	4. The GPL 3.0 applies to this code.
+
+
+ [0x03] The Included Tools
+	- parasite6: icmp neighbor solitication/advertisement spoofer, puts you
+	   as man-in-the-middle, same as ARP mitm (and parasite)
+	- alive6: an effective alive scanng, which will detect all systems
+	   listening to this address
+	- fake_router6: announce yourself as a router on the network, with the
+	   highest priority
+	- redir6: redirect traffic to you intelligently (man-in-the-middle) with
+	   a clever icmp6 redirect spoofer
+	- toobig6: mtu decreaser with the same intelligence as redir6
+	- detect-new-ip6: detect new ip6 devices which join the network, you can
+	   run a script to automatically scan these systems etc.
+	- dos-new-ip6: detect new ip6 devices and tell them that their chosen IP
+	   collides on the network (DOS).
+	- fake_mld6: announce yourself in a multicast group of your choice on the net
+	- fake_mipv6: steal a mobile IP to yours if IPSEC is not needed for authentication
+	- fake_advertiser6: announce yourself on the network
+	- smurf6: local smurfer
+	- rsmurf6: remote smurfer, known to work only against linux at the moment
+	- sendpees6: a tool by willdamn(ad)gmail.com, which generates a neighbor
+          solicitation requests with a lot of CGAs (crypto stuff ;-) to keep the CPU busy. nice.
+
+
+ [0x04] Documentation 
+ 
+	THC-IPV6 comes with a rather long <a href="README">README file</a> that describes the
+	details about the usage and library interface.
+
+
+ [0x05] Development &amp; Contributions
+
+	Your contributions are more than welcomed!
+	
+	If you find bugs, coded enhancements or wrote a new attack tool
+	please send them to vh (at) thc (dot) org
+
+
+ [0x06] The Art of Downloading: Source and Binaries
+ 
+	The source code of IPV6: <a href="../releases/thc-ipv6-0.7.tar.gz">thc-ipv6-0.7.tar.gz</a>
+	(Note: it is for Linux 2.6, IA32 only!)
+
+
+ Comments and suggestions are welcome.
+
+ Yours sincerly,
+
+ van Hauser
+ The Hackers Choice
+ http://www.thc.org
+
+</PRE></BODY></HTML>
