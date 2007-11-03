@@ -1,4 +1,12 @@
-fix makefile to honor CFLAGS
+#! /bin/sh /usr/share/dpatch/dpatch-run
+
+## 01_crypt_luksFormat_libcryptsetup.dpatch
+## by Till Maas <gmame-dmcrypt.20.boeh@spamgourmet.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: fix makefile to honor CFLAGS
+
+@DPATCH@
 
 diff --git a/Makefile b/Makefile
 --- a/Makefile
