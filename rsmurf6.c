@@ -13,12 +13,12 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s [-r] interface victim-ip\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s [-r] interface victim-ip\n\n", prg);
   printf("Smurfs the local network of the victim. Note: this depends on an\n");
   printf("implementation error, currently only verified on Linux.\n");
   printf("Evil: \"ff02::1\" as victim will DOS your local LAN completely\n");
-  printf("Use -r to use raw mode.\n");
+  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 

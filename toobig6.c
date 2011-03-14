@@ -13,10 +13,10 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s [-r] interface target-ip existing-ip mtu\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s [-r] interface target-ip existing-ip mtu\n\n", prg);
   printf("Implants the specified mtu on the target\n");
-  printf("Use -r to use raw mode.\n");
+  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
   int pkt_len = 0;
   thc_ipv6_hdr *ipv6;
   char *interface;
-  int rawmode = 0;
+  int rawmode = 0, len;
 
   if (argc != 5 || strncmp(argv[1], "-h", 2) == 0)
     help(argv[0]);
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
   
   if (rawmode == 0)
     mac6 = thc_get_own_mac(interface);
-  buf_len = mtu;
+  buf_len = mtu - 47;
 
   memset(buf, 'A', buf_len);
   if ((pkt = thc_create_ipv6(interface, PREFER_GLOBAL, &pkt_len, src6, target6, 0, 0, 0, 0, 0)) == NULL)
@@ -64,10 +64,10 @@ int main(int argc, char *argv[]) {
   }
 
   ipv6 = (thc_ipv6_hdr *) pkt;
-thc_dump_data(ipv6->pkt, ipv6->pkt_len, "orig pkt");
   thc_inverse_packet(ipv6->pkt + 14, ipv6->pkt_len - 14);
-thc_dump_data(ipv6->pkt, ipv6->pkt_len, "invr pkt");
-thc_send_pkt(interface, pkt, &pkt_len);
+  len = ipv6->pkt_len -14;
+  if (len > 1400)
+    len = 1400;
   thc_toobig6(interface, src6, mac6, NULL, mtu, ipv6->pkt + 14, ipv6->pkt_len - 14);
 
   return 0;

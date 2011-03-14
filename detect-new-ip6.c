@@ -20,10 +20,10 @@ char *ptr3, *ptr4;
 int i;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s interface [script]\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s interface [script]\n\n", prg);
   printf("This tools detects new ipv6 addresses joining the local network.\n");
-  printf("If script is supplied, it is executed with the detected IPv6 address as option\n");
+  printf("If script is supplied, it is executed with the detected IPv6 address as option\n\n");
   exit(-1);
 }
 
@@ -71,5 +71,5 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Started ICMP6 DAD detection (Press Control-C to end) ...\n");
-  return thc_pcap_function(interface, "ip6", (char *) intercept);
+  return thc_pcap_function(interface, "ip6", (char *) intercept, NULL);
 }

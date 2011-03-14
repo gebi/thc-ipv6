@@ -13,18 +13,18 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s interface ip-address [target-address [own-mac-address]]\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s interface ip-address [target-address [own-mac-address]]\n\n", prg);
   printf("Advertise ipv6 address on the network (with own mac if not defined)\n");
   printf("sending it to the all-nodes multicast address if no target specified.\n");
-  printf("Use -r to use raw mode.\n");
+  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
 int main(int argc, char *argv[]) {
-  unsigned char *pkt1 = NULL, buf[24];
+  unsigned char *pkt1 = NULL, *pkt2 = NULL, buf[24];
   unsigned char *unicast6, *dst6 = NULL, srcmac[6] = "", *mac = srcmac;
-  int pkt1_len = 0, flags;
+  int pkt1_len = 0, pkt2_len = 0, flags, prefer = PREFER_GLOBAL;
   char *interface;
   int rawmode = 0;
 
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   memcpy(&buf[18], mac, 6);
   flags = ICMP6_NEIGHBORADV_OVERRIDE;
 
-  if ((pkt1 = thc_create_ipv6(interface, PREFER_GLOBAL, &pkt1_len, unicast6, dst6, 0, 0, 0, 0, 0)) == NULL)
+  if ((pkt1 = thc_create_ipv6(interface, prefer, &pkt1_len, unicast6, dst6, 0, 0, 0, 0, 0)) == NULL)
     return -1;
   if (thc_add_icmp6(pkt1, &pkt1_len, ICMP6_NEIGHBORADV, 0, flags, (unsigned char *) &buf, 24, 0) < 0)
     return -1;
@@ -66,10 +66,19 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: Can not generate packet, exiting ...\n");
     exit(-1);
   }
+  if ((pkt2 = thc_create_ipv6(interface, prefer, &pkt2_len, unicast6, dst6, 0, 0, 0, 0, 0)) == NULL)
+    return -1;
+  if (thc_add_icmp6(pkt2, &pkt2_len, ICMP6_NEIGHBORADV, 0, 0, (unsigned char *) &buf, 24, 0) < 0)
+    return -1;
+  if (thc_generate_pkt(interface, mac, NULL, pkt2, &pkt2_len) < 0) {
+    fprintf(stderr, "Error: Can not generate packet, exiting ...\n");
+    exit(-1);
+  }
 
   printf("Starting advertisement of %s (Press Control-C to end)\n", argv[2]);
   while (1) {
     thc_send_pkt(interface, pkt1, &pkt1_len);
+    thc_send_pkt(interface, pkt2, &pkt2_len);
     sleep(5);
   }
   

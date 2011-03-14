@@ -1,6 +1,120 @@
 CHANGELOG
 =========
 
+NOTE: More tools exist, but are only handed out to specific people
+who develop ipv6 security/pentest tools themselves, or support the
+thc-ipv6 toolkit development. If this matches *you* send me an
+email to vh (at) thc (dot) org , with "thc-ipv6 antispam" in the
+subject line.
+
+
+
+
+v1.4 - December 2010 - PUBLIC
+ * added thcping6
+ * added fake_mld26 (same as fake_mld6 but for MLDv2)
+ * added fake_mldrouter6 - fake an mld router
+ * added exploit6 and the first test cases
+ * added denial6 and the first test cases
+ * fake_mld6:
+    - added query and done MLD types
+    - new command line option -l = loop
+    - command line format changed
+    - added target mac option, needed for new vulnerablity found
+ * dnsdict6:
+    - added 87 more entries to the dictionary
+    - now identified even multiple wildcard IPs and displays them accordingly
+    - now prints the number of unique IPv6 addresses founds
+ * fuzz_ip6:
+    - added fuzzing query, report and done MLD + query and report MLDv2 types
+    - fuzzing first and last two bytes of IPv6 addresses in the packets
+    - command line option for specifying an IPv6 address within the packets
+    - added many options
+ * trace6:
+    - added unreachable detection 
+    - added more informative output
+    - now multiple run save
+    - fixed a core dump which happened on rare occasions
+ * changed command line options for fake_router6 to allow specification of DNS
+ * toobig6: tighter mtu and removed debug output still present in the code, oops
+ * implementation6: added three more test cases, enhanced four test cases, bugfix
+ * compile warning fixes (dnsdict6, sendpees6, thc-ipv6-lib)
+ * Makefile beautification and header fixes by xmw<at>gentoo<dot>org
+ * (covert_send6 and covert_send6d not included)
+ * (fake_dhcps6 not included)
+ * (flood_dhcpc6 not included)
+ * (fake_dns6 not included)
+ * (dos_mld not included)
+ * (alive6 updates not included)
+ * (flood_mld6, flood_mld26 and flood_mldrouter6 not included)
+ * library:
+    - BUG: raw mode does not work! Needs to be implemented properly by someone :-)
+    - imporant fix for gathering a local mac, required for Mac OS/X targets
+    - added thc_pcap_init_promisc function (required for new fake_mld6 functionality)
+    - added thc_is_dst_local function (required for new alive6 functionality)
+    - added thc_add_udp function (required for new alive6 functionality)
+    - added thc_bind_udp_port function (required for fake_dhcps6)
+    - added thc_bind_multicast_to_socket (required for fake_dhcps6)
+    - added thc_ipv6_show_errors function to toggle error messages from library
+    - optimization in thc_send_as_fragment6 to only get MACs once :-)
+    - fix for max offset in thc_add_hdr_fragment, plus bad value check
+    - fix for beautification ipv6 address output function
+    - looked for memory leaks and removed all I found
+    - for performance reasons also stale neighbor mac entries are used now
+    - made library thread safe
+
+v1.3 - PRIVATE
+
+v1.2 - June 2010
+ * compile fixes
+ * test case added to implementation6
+
+v1.1 - June 2010
+ * dnsdict6: big wordlist update
+ * upgraded thc-ipv6 license to GPLv3
+
+v1.0 - May 2010 - PRIVATE
+ * beta release
+
+v0.9 - April/May 2010 - PRIVATE
+ * added dnsdict6
+ * added trace6
+ * added flood_router6
+ * added flood_advertise6
+ * added fuzz_ip6
+ * added implementation6d
+ * implementation6:
+	- renamed from test_implementation6
+	- added A LOT of test cases and reply checks
+ * fake_router6:
+	- changed command line options
+	- added default route entry (not supported by many systems though)
+	- added DNS server ip (the official dns multicast address)
+	- small fixes
+ * alive6:
+	- small fixes
+	- added -l switch for using the link layer address
+ * library:
+	- fixed a big bug in the routing module, library thought sometimes a
+	   remote network is local!
+	- fixed a bug where a hard/permanent set mac for a destination would
+	   not be found when the dst is not alive
+	- now chooses an alternate IP6 address when the prefered one
+	   is not available (link vs. global)
+	- fixed TTL setting when using raw mode
+	- supporting mobile home address option in dst option (for checksum)
+	- pcap was opened in promisc mode - shouldnt have been, unnecessary
+	- valid icmp checksum for mobile home address and routing pointer == 0
+ 	- TCP can be now added as a header too + checksum calculation, but
+	   not for inverse_packet (yet - no application for that currently).
+
+
+v0.8 - June 2007 - PRIVATE
+ * Clarified License: GPL 2
+ * Improved Makefile
+ * Added a man page for all tools together (by gebi(at)grml.org)
+
+
 v0.7 - AUGUST 2006 - BETA
  * Added sendpees6.c and a patch from willdamn@gmail.com - thanks a lot!
    (its a new DOS attack)

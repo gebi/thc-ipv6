@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <openssl/rsa.h>
+extern int thc_add_send(unsigned char *pkt, int *pkt_len, int type, int code, unsigned int flags, unsigned char *data, int data_len, thc_cga_hdr *cga_hdr, thc_key_t *key, unsigned char *tag, int checksum);
 
 int main(int argc, char **argv)
 {
@@ -22,9 +23,9 @@ int main(int argc, char **argv)
   
   if(argc != 5)
     {  
-       printf("sendpees by willdamn <willdamn@gmail.com>\n");
-       printf("usage: %s <inf> <key_length> <prefix> <victim>\n", argv[0]);
-       printf("Send SEND neighbor solicitation messages and make target to verify a lota CGA and RSA signatures\n");
+       printf("sendpees6 by willdamn <willdamn@gmail.com>\n\n");
+       printf("usage: %s <inf> <key_length> <prefix> <victim>\n\n", argv[0]);
+       printf("Send SEND neighbor solicitation messages and make target to verify a lota CGA and RSA signatures\n\n");
        exit(1);
     }
   

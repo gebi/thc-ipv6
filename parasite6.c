@@ -19,11 +19,11 @@ char *interface;
 char *ptr1, *ptr2, *ptr3, *ptr4;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s interface [fake-mac]\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s interface [fake-mac]\n\n", prg);
   printf("This is an \"ARP spoofer\" for IPv6, redirecting all local traffic to your own\n");
   printf("system (or nirvana if fake-mac does not exist) by answering falsely to\n");
-  printf("Neighbor Solitication requests\n");
+  printf("Neighbor Solitication requests\n\n");
   exit(-1);
 }
 
@@ -107,5 +107,5 @@ int main(int argc, char *argv[]) {
 
   printf("Remember to enable routing (ip_forwarding), you will denial service otherwise!\n");
   printf("Started ICMP6 Neighbor Solitication Interceptor (Press Control-C to end) ...\n");
-  return thc_pcap_function(interface, "ip6", (char *) intercept);
+  return thc_pcap_function(interface, "ip6", (char *) intercept, NULL);
 }
