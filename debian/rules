@@ -9,8 +9,6 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-include /usr/share/dpatch/dpatch.make
-
 CFLAGS = -g
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -21,7 +19,7 @@ endif
 
 CFLAGS += -fstack-protector-all
 
-build: patch build-stamp
+build: build-stamp
 
 build-stamp:
 	dh_testdir
@@ -31,8 +29,7 @@ build-stamp:
 
 	touch build-stamp
 
-clean: clean-patched unpatch
-clean-patched:
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp

@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Michael Gebetsroither <gebi@grml.org>
 Uploaders: Michael Prokop <mika@grml.org>
-Build-Depends: debhelper (>= 5), libpcap0.8-dev, libssl-dev, dpatch
+Build-Depends: debhelper (>= 5), libpcap0.8-dev, libssl-dev
 Standards-Version: 3.7.2
 
 Package: thc-ipv6
