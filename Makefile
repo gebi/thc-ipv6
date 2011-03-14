@@ -1,70 +1,35 @@
 CC=gcc
-#OPT=-Wall -ggdb
-OPT=-O2
-LIB=-lpcap -lssl -lcrypto
-PROGRAM=parasite6 dos-new-ip6 detect-new-ip6 fake_router6 fake_advertise6 fake_mld6 fake_mipv6 redir6 smurf6 alive6 toobig6 rsmurf6 test_implementation6 sendpees6
+#CFLAGS?=-Wall -ggdb
+CFLAGS?=-O2
+LDFLAGS+=-lpcap -lssl -lcrypto
+PROGRAMS=parasite6 dos-new-ip6 detect-new-ip6 fake_router6 fake_advertise6 fake_mld6 fake_mld26 fake_mldrouter6 fake_mipv6 redir6 smurf6 alive6 toobig6 rsmurf6 implementation6 implementation6d sendpees6 fuzz_ip6 flood_router6 flood_advertise6 trace6 exploit6 denial6 thcping6
+LIBS=thc-ipv6-lib.o
 
-all:	thc-ipv6-lib.o $(PROGRAM)
+PREFIX=/usr/local
+MANPREFIX=${PREFIX}/share/man
 
-debug:
-	-$(CC) $(OPT) $(LIB) -o test test.c thc-ipv6-lib.o
-	-$(CC) $(OPT) $(LIB) -o test2 test2.c thc-ipv6-lib.o
-	-$(CC) $(OPT) $(LIB) -o test3 test3.c thc-ipv6-lib.o
+all:	$(LIBS) $(PROGRAMS) dnsdict6
 
-parasite6:	parasite6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o parasite6 parasite6.c thc-ipv6-lib.o
+dnsdict6:	dnsdict6.c $(LIBS)
+	$(CC) $(CFLAGS) -o $@ dnsdict6.c $(LDFLAGS) -lpthread
 
-dos-new-ip6:	dos-new-ip6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o dos-new-ip6 dos-new-ip6.c thc-ipv6-lib.o
-
-detect-new-ip6:	detect-new-ip6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o detect-new-ip6 detect-new-ip6.c thc-ipv6-lib.o
-
-fake_router6:	fake_router6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o fake_router6 fake_router6.c thc-ipv6-lib.o
-
-fake_advertise6:	fake_advertise6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o fake_advertise6 fake_advertise6.c thc-ipv6-lib.o
-
-fake_mld6:	fake_mld6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o fake_mld6 fake_mld6.c thc-ipv6-lib.o
-
-fake_mipv6:	fake_mipv6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o fake_mipv6 fake_mipv6.c thc-ipv6-lib.o
-
-redir6:	redir6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o redir6 redir6.c thc-ipv6-lib.o
-
-smurf6:	smurf6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o smurf6 smurf6.c thc-ipv6-lib.o
-
-rsmurf6:	rsmurf6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o rsmurf6 rsmurf6.c thc-ipv6-lib.o
-
-alive6:	alive6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o alive6 alive6.c thc-ipv6-lib.o
-
-toobig6:	toobig6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o toobig6 toobig6.c thc-ipv6-lib.o
-
-test_implementation6:	test_implementation6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o test_implementation6 test_implementation6.c thc-ipv6-lib.o
-
-sendpees6:	sendpees6.c thc-ipv6-lib.o
-	$(CC) $(OPT) $(LIB) -o sendpees6 sendpees6.c thc-ipv6-lib.o
-
-thc-ipv6-lib.o: thc-ipv6-lib.c
-	$(CC) $(OPT) -c thc-ipv6-lib.c
+%:	%.c $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) 
 
 strip:	all
-	strip $(PROGRAM)
+	strip $(PROGRAMS) dnsdict6
 
 install: all strip
-	cp -v $(PROGRAM) /usr/local/bin
+	install -m0755 -d ${DESTDIR}${PREFIX}/bin
+	install -m0755 $(PROGRAMS) dnsdict6 ${DESTDIR}${PREFIX}/bin
+	install -m0755 -d ${DESTDIR}${MANPREFIX}/man8
+	install -m0644 -D thc-ipv6.8 ${DESTDIR}${MANPREFIX}/man8
 
 clean:
-	rm -vf $(PROGRAM) test thc-ipv6-lib.o test_implementation6 test test1 test2 test3 core DEADJOE *~
+	rm -f $(PROGRAMS) dnsdict6 $(LIBS) core DEADJOE *~
 
 backup:	clean
 	tar czvf ../thc-ipv6-bak.tar.gz *
 	sync
+
+.PHONY: all install clean 

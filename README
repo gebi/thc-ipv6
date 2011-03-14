@@ -1,6 +1,9 @@
                   
                       THC-IPV6-ATTACK-TOOLKIT
-                (c) 2005,2006 vh@thc.org www.thc.org
+                (c) 2005-2010 vh@thc.org www.thc.org
+
+
+		Licensed under GPLv3 (see LICENSE file)
 
 
 INTRODUCTION
@@ -17,10 +20,11 @@ LIMITATIONS
 ===========
 This code currently only runs on:
  - Linux 2.6.x (because of /proc usage)
- - 32 Bit (because I am lazy)
+ - 32 Bit
  - Ethernet and Raw are supported (is there anything else necessary?)
-But this means for all linux guys, it will work for 98% of your use cases.
-Patches are welcome!
+But this means for all linux guys that it will work for 98% of your use cases.
+Patches are welcome! (add "antispam" in the subject line to get through my
+anti-spam protection, otherwise the email will bounce)
 
 
 THE TOOLS
@@ -31,6 +35,7 @@ tools:
    as man-in-the-middle, same as ARP mitm (and parasite)
  - alive6: an effective alive scanng, which will detect all systems
    listening to this address
+ - dnsdict6: parallized dns ipv6 dictionary bruteforcer
  - fake_router6: announce yourself as a router on the network, with the
    highest priority
  - redir6: redirect traffic to you intelligently (man-in-the-middle) with
@@ -40,16 +45,28 @@ tools:
    run a script to automatically scan these systems etc.
  - dos-new-ip6: detect new ip6 devices and tell them that their chosen IP
    collides on the network (DOS).
+ - trace6: very fast traceroute6 with supports ICMP6 echo request and TCP-SYN
+ - flood_router6: flood a target with random router advertisements
+ - flood_advertise6: flood a target with random neighbor advertisements
+ - fuzz_ip6: fuzzer for ipv6
+ - implementation6: performs various implementation checks on ipv6
+ - implementation6d: listen daemon for implementation6 to check behind a FW
  - fake_mld6: announce yourself in a multicast group of your choice on the net
+ - fake_mld26: same but for MLDv2
+ - fake_mldrouter6: fake MLD router messages
  - fake_mipv6: steal a mobile IP to yours if IPSEC is not needed for authentication
  - fake_advertiser6: announce yourself on the network
  - smurf6: local smurfer
  - rsmurf6: remote smurfer, known to work only against linux at the moment
+ - exploit6: known ipv6 vulnerabilities to test against a target
+ - denial6: a collection of denial-of-service tests againsts a target
+ - thcping6: sends a hand crafted ping6 packet
  - sendpees6: a tool by willdamn@gmail.com, which generates a neighbor
    solicitation requests with a lot of CGAs (crypto stuff ;-) to keep the
    CPU busy. nice.
 Just run the tools without options and they will give you help and show the
 command line options.
+
 
 
 THE LIBRARY
@@ -64,7 +81,7 @@ Your basic structure you use is
 e.g. 
   thc_ipv6_hdr *my_ipv6_packet;
   int my_ipv6_packet_len;
-you will never have to play with its options.
+and you will never have to play with its options/fields.
 
 Whenever you want to build an ip6 packet, you just write:
   my_ipv6_packet = thc_create_ipv6(interface, prefer, &my_ipv6_packet_len,
@@ -79,12 +96,13 @@ The options to thc_create_ipv6 are:
  (int *) &my_ipv6_packet_len - the size of the packet which will be created
  (unsigned char*) src6 - the source IP6 (OPTIONAL - will be selected if NULL)
  (unsigned char*) dst6 - the destination IP6 (in network format, 16 bytes long)
+                         usually the result of thc_resolve6("ipv6.google.com");
  (int) ttl - the ttl of the packet (OPTIONAL - 0 will set this to 255)
  (int) length - the length which will be set in the header (OPTIONAL - 0 =
                 real length)
  (int) label - the flow label (0 is fine)
  (int) class - the class of the packet (0 is fine)
- (int) version - the IP6 version (OPTIONAL - 0 will set the version 6)
+ (int) version - the IP6 version (OPTIONAL - 0 will set this to version 6)
 It returns NULL on errors or a malloc'ed structure on success.
 free() it once you are done with it.
 
@@ -126,10 +144,14 @@ The functions explained:
   (int) buflen - the length of buf
 These functions return (int) 0 on success and -1 on error.
 
-Finally you can add the stream or dgram headers. Note that currently only
-ICMP6 is supported.
+Finally you can add the stream or dgram headers.
   thc_add_icmp6(my_ipv6_packet, &my_ipv6_packet_len, type, code, flags, buf,
                 buflen, checksum);
+  thc_add_tcp(my_ipv6_packet, &my_ipv6_packet_len, source_port,
+              destination_port, sequence_number, ack_number, flags, window_size
+              urgent_pointer, options, optione_length, data, data_length);
+  thc_add_udp(my_ipv6_packet, &my_ipv6_packet_len, source_port, 
+              destination_port, checksum, data, data_length);
   thc_add_data6(my_ipv6_packet, &my_ipv6_packet_len, type, buf, buflen); 
  _icmp6: Add an ICMP6 packet header
   (int) type: the ICMP6 type
@@ -138,6 +160,19 @@ ICMP6 is supported.
   (char*) buf - a char buffer. you have to control this buffer yourself with
                 but you want to write into it.
   (int) buflen - the length of buf
+ _tcp|_udp: Add an TCP or UDP header
+  (ushort) source_port: source port
+  (ushort) destination_port: destination port
+  (uint) sequence_number: TCP sequence number
+  (uint) ack_number: TCP acknowledgement number
+  (ushort) checksum: UDP checksum, 0 = generate checksum (for TCP the checksum is always calculated)
+  (uchar) flags: TCP flags: TCP_SYN, TCP_ACK, TCP_FIN, TCP_RST, TCP_PSH, ...
+  (uint) window_size: TCP window size
+  (uint) urgent_pointer: TCP urgent pointer (usually 0)
+  (char*) options: TCP options buffer, can be NULL
+  (uint) options_length: the length of the TCP options buffer
+  (char*) data: the data the protocol carries
+  (uint) data_length: the length of the data buffer
  _data6: Add a miscellaneous header
   (int) type: the protocol ID
   (char*) buf - a char buffer. you have to control this buffer yourself with
@@ -149,9 +184,11 @@ Once you are done, you create and send the packet.
   thc_generate_pkt(interface, srcmac, dstmac, my_ipv6_packet,
                    &my_ipv6_packet_len);
   thc_send_pkt(interface, my_ipv6_packet, &my_ipv6_packet_len);
-  thc_generate_and_send_pkt(interface, srcmac, dstmac, my_ipv6_packet,
+or combined into one function:
+ thc_generate_and_send_pkt(interface, srcmac, dstmac, my_ipv6_packet,
                             &my_ipv6_packet_len);
- thc_generate_and_sendpkt: This generates the real and final IPv6 packet and
+
+ thc_generate_and_send_pkt: This generates the real and final IPv6 packet and
                            then sends it.
   (char*) interface - the interface to send the packet on
   (unsigned char*) srcmac - the source mac to use (in network format)
@@ -202,19 +239,42 @@ functions which sends impc6 packets in just one line of code:
 These do what you expect them to do, so I am too lazy^H^H^H^H^Hbusy to
 describe it in more details.
 
+The following functions allocate memory for the result pointer, so remember
+to free the result pointers from these functions once you do not need them
+anymore:
+  thc_ipv6_dummymac()
+  thc_ipv62string()
+  thc_string2ipv6()
+  thc_string2notation()
+  thc_resolve6()
+  thc_get_own_ipv6()
+  thc_get_own_mac()
+  thc_get_multicast_mac()
+  thc_get_mac()
+  thc_lookup_ipv6_mac()
+  thc_look_neighborcache()
+  thc_generate_key()
+  thc_generate_cga()
+  thc_generate_rsa()
+
+It helps a lot if you take a look at example usages. The best ones are
+the tools from the thc-ipv6 package, especially implementation6.c and
+fake_*6.c - have fun, and send back code, so the community can further
+build on it.
+
 
 DETECTION
 =========
 Most tools can easily be detected by an IDS or specialized detection software.
 This is done on purpose to make rogue usage detection easier.
-The tools either specify a fixed packet signature, or sniff for packets
-(e.g. therefore also answering to icmp6 neighbor solitications which are sent
-to a non-existing mac, and are therefore very easy to detect).
+The tools either specify a fixed packet signature, or generically sniff for
+packets (e.g. therefore also answering to icmp6 neighbor solitications which
+are sent to a non-existing mac, and are therefore very easy to detect).
 If you dont want this, change the code.
 
 
 PATCHES, BUGS, HINTS, etc.
 ==========================
-Send them to vh@thc.org
+Send them to vh (at) thc (dot) org (and add "antispam" to the subject line)
 
 Have fun!

@@ -13,11 +13,11 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s [-r] interface victim-ip [multicast-network-address]\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s [-r] interface victim-ip [multicast-network-address]\n\n", prg);
   printf("Smurf the target with icmp echo replies. Target of echo request is the\n");
   printf("local all-nodes multicast address if not specified\n");
-  printf("Use -r to use raw mode.\n");
+  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 

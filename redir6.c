@@ -13,12 +13,12 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s [-r] interface src-ip target-ip original-router new-router [new-router-mac]\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s [-r] interface src-ip target-ip original-router new-router [new-router-mac]\n\n", prg);
   printf("Implant a route into src-ip, which redirects all traffic to target-ip to\n");
   printf("new-ip. You must know the router which would handle the route.\n");
   printf("If the new-router-mac does not exist, this results in a DOS.\n");
-  printf("Use -r to use raw mode.\n");
+  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 

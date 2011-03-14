@@ -21,10 +21,10 @@ char *ptr3, *ptr4;
 int i;
 
 void help(char *prg) {
-  printf("%s %s (c) 2006 by %s %s\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s interface\n", prg);
+  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s interface\n\n", prg);
   printf("This tools prevents new ipv6 interfaces to come up, by sending answers to\n");
-  printf("duplicate ip6 checks (DAD). This results in a DOS for new ipv6 devices.\n");
+  printf("duplicate ip6 checks (DAD). This results in a DOS for new ipv6 devices.\n\n");
   exit(-1);
 }
 
@@ -108,5 +108,5 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Started ICMP6 DAD Denial-of-Service (Press Control-C to end) ...\n");
-  return thc_pcap_function(interface, "ip6", (char *) intercept);
+  return thc_pcap_function(interface, "ip6", (char *) intercept, NULL);
 }
