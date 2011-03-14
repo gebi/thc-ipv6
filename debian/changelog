@@ -1,3 +1,17 @@
+thc-ipv6 (1.4-1) unstable; urgency=low
+
+  * [325b41d] New upstream version 1.4 [Closes: issue948]
+    - [05322ea] adapt for added binaries
+    - [533f8f1] add missing tools to thc-ipv6.8
+
+  * General cleanups:
+    - [7e0c7c3] Remove last patch and dpatch support
+    - [f1068e8] don't ignore failures on clean
+    - [304a85d] update to Standards-Version 3.9.1
+    - [a6e3243] update manpage from upstream
+
+ -- Christian Hofstaedtler <ch@grml.org>  Mon, 14 Mar 2011 23:04:51 +0100
+
 thc-ipv6 (0.7-5) unstable; urgency=low
 
   [ Michael Prokop ]
