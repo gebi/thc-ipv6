@@ -1,0 +1,32 @@
+CHANGELOG
+=========
+
+v0.7 - AUGUST 2006 - BETA
+ * Added sendpees6.c and a patch from willdamn@gmail.com - thanks a lot!
+   (its a new DOS attack)
+
+
+v0.6 - MARCH 2006 - BETA
+ * Added fake_mipv6 tool to spoof mobile ipv6 binding updates
+ * Fixed a bug in the thc_toobig6 and some other thc_ icmp6 lib functions
+
+
+v0.5 - FEBRUARY 2006 - ALPHA
+ * Added RAW mode, just add -r as 1st option to most tools
+
+
+v0.4 - FEBRUARY 2006 - ALPHA
+ * Added fake_mld6 tool
+
+
+v0.3 - JANUARY 2006 - ALPHA
+ * Added detect-new-ip6 tool
+ * Added function to get the mac from the ipv6 neighbor cache, thanks to
+   dan kaminsky
+ * It finally has a README which describes the thc-ipv6-lib.c interface
+   (roughly though, but anyway, now there is at least *something*)
+
+
+v0.2 - NOVEMBER 2005 - ALPHA
+ * First release
+ 
