@@ -61,20 +61,32 @@ binary-arch: build install
 	dh_installdocs
 	dh_installman debian/thc-ipv6.8
 	dh_compress
-	dh_link usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/parasite6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/dos-new-ip6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/detect-new-ip6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_router6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_advertise6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_mld6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_mipv6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/redir6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/smurf6.8.gz \
+	dh_link \
 		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/alive6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/toobig6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/denial6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/detect-new-ip6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/dnsdict6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/dos-new-ip6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/exploit6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_advertise6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_mipv6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_mld26.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_mld6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_mldrouter6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fake_router6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/flood_advertise6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/flood_router6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/fuzz_ip6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/implementation6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/implementation6d.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/parasite6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/redir6.8.gz \
 		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/rsmurf6.8.gz \
 		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/sendpees6.8.gz \
-		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/test_implementation6.8.gz
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/smurf6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/thcping6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/toobig6.8.gz \
+		usr/share/man/man8/thc-ipv6.8.gz usr/share/man/man8/trace6.8.gz
 	dh_strip
 	dh_fixperms
 	dh_installdeb
