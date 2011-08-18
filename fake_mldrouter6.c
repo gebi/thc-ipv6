@@ -15,16 +15,18 @@ int rawmode = 0;
 int empty = 0;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s [-r] [-l] interface advertise|solicitate|terminate [own-ip [own-mac-address]]\n\n", prg);
   printf("Announce, delete or soliciated MLD router - sourself or others.\n");
-  printf("Use -l to loop and send (in 5s intervals) until Control-C is pressed.\nUse -r to use raw mode.\n\n");
+  printf("Use -l to loop and send (in 5s intervals) until Control-C is pressed.\n");
+//  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
-void check_packets(u_char *foo, const struct pcap_pkthdr *header, const unsigned char *data) {
-  unsigned char *ptr = (unsigned char *)data;
+void check_packets(u_char * foo, const struct pcap_pkthdr *header, const unsigned char *data) {
+  unsigned char *ptr = (unsigned char *) data;
   int len = header->caplen;
+
   if (rawmode == 0) {
     ptr += 14;
     len -= 14;
@@ -32,7 +34,7 @@ void check_packets(u_char *foo, const struct pcap_pkthdr *header, const unsigned
   if (debug)
     thc_dump_data(ptr, len, "Received Packet");
   if (len > 43 && ptr[6] == 0x3a && ptr[40] == ICMP6_MLD_ROUTERADV)
-      printf("MLD router advertisement: %s is performing MLD routing\n", thc_string2notation(thc_ipv62string(ptr + 8)));
+    printf("MLD router advertisement: %s is performing MLD routing\n", thc_ipv62notation(ptr + 8));
 }
 
 int main(int argc, char *argv[]) {
@@ -88,7 +90,8 @@ int main(int argc, char *argv[]) {
     src6 = thc_resolve6(argv[3]);
 
   if (argc == 5 && argv[4] != NULL && argv[4][0] != 0)
-    sscanf(argv[4], "%x:%x:%x:%x:%x:%x", (unsigned int*)&srcmac[0], (unsigned int*)&srcmac[1], (unsigned int*)&srcmac[2], (unsigned int*)&srcmac[3], (unsigned int*)&srcmac[4], (unsigned int*)&srcmac[5]);
+    sscanf(argv[4], "%x:%x:%x:%x:%x:%x", (unsigned int *) &srcmac[0], (unsigned int *) &srcmac[1], (unsigned int *) &srcmac[2], (unsigned int *) &srcmac[3],
+           (unsigned int *) &srcmac[4], (unsigned int *) &srcmac[5]);
   else
     mac = thc_get_own_mac(interface);
 
@@ -105,13 +108,13 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: Can not generate packet, exiting ...\n");
     exit(-1);
   }
-  
+
   printf("Sending packet%s to %s%s\n", loop ? "s" : "", argv[2], loop ? " (Press Control-C to end)" : "");
   do {
     thc_send_pkt(interface, pkt1, &pkt1_len);
     sleep(5);
     if (mode == ICMP6_MLD_ROUTERSOL)
-      while (thc_pcap_check(p, (char*) check_packets, NULL));
+      while (thc_pcap_check(p, (char *) check_packets, NULL));
   } while (loop);
-  return 0; // never reached
+  return 0;                     // never reached
 }

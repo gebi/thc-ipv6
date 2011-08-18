@@ -1,13 +1,14 @@
+
 /*
  * dnsdict6 is actually based on dnsmap with four changes:
  *   - threaded (way faster)
  *   - bugfixes
  *   - only prints ipv6 addresses
  *   - simplified options
- * have fun!     van Hauser / THC, May 2010
+ * have fun!     van Hauser / THC, May 2011
  *
  * ** dnsmap - DNS Network Mapper by pagvac
- * ** Copyright (C) 2010 gnucitizen.org
+ * ** Copyright (C) 2011 gnucitizen.org
  * **
  * ** This program is free software; you can redistribute it and/or modify
  * ** it under the terms of the GNU General Public License as published by
@@ -37,8 +38,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <resolv.h>
 #include "thc-ipv6.h"
-#include "dnsdict6.h" // built-in subdomains list
+#include "dnsdict6.h"           // built-in subdomains list
 
 //#define DEBUG 1
 #define FALSE 0
@@ -50,19 +52,39 @@
 #define MAX_WCARD  8
 
 char domain[256];
-unsigned short int filtIPcount = 0, milliseconds = 10, ipCount = 0;
-unsigned short int intIPcount = 0, found = 0, txtResults = FALSE;
-unsigned short int csvResults = FALSE, delay = FALSE, ucount = 0, wcard = 0;
-char wildcardIpStr[MAX_WCARD][INET_ADDRSTRLEN], unique[MAX_UNIQUE][INET_ADDRSTRLEN];
+unsigned short int filtIPcount = 0, milliseconds = 10, ipCount = 0, ipCount4;
+unsigned short int intIPcount = 0, found = 0, txtResults = FALSE, do4 = 0, do6 = 0, dof = 0;
+unsigned short int csvResults = FALSE, delay = FALSE, ucount = 0, ucount4 = 0, wcard = 0, wcard4 = 0;
+char wildcardIpStr[MAX_WCARD][INET_ADDRSTRLEN], wildcardIpStr4[MAX_WCARD][16], unique[MAX_UNIQUE][INET_ADDRSTRLEN], unique4[MAX_UNIQUE][16];
+char **sub = (char **) sub_medium;
 
 void *help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s [-t THREADS] domain [dictionary-file]\n\n", prg);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s [-d46] [-s|-m|-l|-x] [-t THREADS] [-D] domain [dictionary-file]\n\n", prg);
   printf("Enumerates a domain for DNS entries, it uses a dictionary file if supplied\n");
-  printf("or a built-in list otherwise.\n");
-  printf("Use -t to specify the number of threads to use (default: %d, max: %d).\n", DEFAULT_THREADS, MAX_THREADS);
-  printf("Use just -D to dump the built-in list.\nTool based on dnsmap by pagvac@gnucitizen.org.\n");
+  printf("or a built-in list otherwise. This tool is based on dnsmap by gnucitizen.org.\n\n");
+  printf("Options:\n");
+  if (do4 && do6 == 0)
+    printf(" -6      also dump IPv6 addresses\n");
+  if (do6 && do4 == 0)
+    printf(" -4      also dump IPv4 addresses\n");
+  printf(" -t NO   specify the number of threads to use (default: %d, max: %d).\n", DEFAULT_THREADS, MAX_THREADS);
+  printf(" -D      dump the selected built-in wordlist, no scanning.\n");
+  printf(" -d      display IPv6 information on NS and MX DNS domain information.\n");
+  printf(" -[smlx] choose the dictionary size by -s(mall=50), -m(edium=796) (DEFAULT)\n");
+  printf("           -l(arge=1416), or -x(treme=3211)\n");
+  printf("\n");
   exit(-1);
+}
+
+// return true if the domain seems valid (NS entry exists)
+int verifyDomain(char *dom) {
+  unsigned char vbuf[1024];
+
+  if (res_query(dom, ns_c_in, ns_t_ns, vbuf, sizeof(vbuf)) >= 0)
+    return TRUE;
+
+  return FALSE;
 }
 
 // return true if domain wildcards are enabled
@@ -70,14 +92,15 @@ unsigned short int wildcarDetect(char *dom) {
   char s[MAXSTRSIZE] = "";
   unsigned short int i = 0, j, k, max = 8;
   struct addrinfo hints, *res, *p;
-  void *addr;
+  void *addr, *addr4;
   int status;
   char ipv6str[INET6_ADDRSTRLEN];
+  char ipv4str[16];
   struct sockaddr_in6 *ipv6, *q;
+  struct sockaddr_in *ipv4, *q4;
 
   memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_INET6;   // AF_INET or AF_INET6 to force version
-//  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_family = dof;   // AF_INET or AF_INET6 to force version
   srand(time(NULL));
 
   // generate up to random digits subdomain string
@@ -91,11 +114,12 @@ unsigned short int wildcarDetect(char *dom) {
   printf("random subdomain for wildcard testing: %s\n", s);
 #endif
   // random subdomain resolves, thus wildcards are enabled
-  if ((status = getaddrinfo(dom, NULL, &hints, &res)) == 0) {
+  if ((status = getaddrinfo(s, NULL, &hints, &res)) == 0) {
     fprintf(stderr, "Warning: wildcard domain configured\n");
     q = NULL;
+    q4 = NULL;
     for (p = res; p != NULL; p = p->ai_next) {
-      if (p->ai_family == AF_INET6) {       // IPv6
+      if (do6 && p->ai_family == AF_INET6) {   // IPv6
         ipv6 = (struct sockaddr_in6 *) p->ai_addr;
         addr = &(ipv6->sin6_addr);
         if (q == NULL || memcmp(&ipv6->sin6_addr, &q->sin6_addr, 16) != 0) {
@@ -107,6 +131,18 @@ unsigned short int wildcarDetect(char *dom) {
           inet_ntop(p->ai_family, addr, ipv6str, sizeof ipv6str);
           printf("*.%s => %s\n", dom, ipv6str);
         }
+      } else if (do4 && p->ai_family == AF_INET) {
+        ipv4 = (struct sockaddr_in *) p->ai_addr;
+        addr4 = &(ipv4->sin_addr);
+        if (q4 == NULL || memcmp(&ipv4->sin_addr, &q4->sin_addr, 4) != 0) {
+          q4 = ipv4;
+          if (wcard4 < MAX_WCARD) {
+            memcpy(wildcardIpStr4[wcard4], addr4, 4);
+            wcard4++;
+          }
+          inet_ntop(p->ai_family, addr4, ipv4str, sizeof ipv4str);
+          printf("*.%s -> %s\n", dom, ipv4str);
+        }
       }
     }
     freeaddrinfo(res);
@@ -115,19 +151,20 @@ unsigned short int wildcarDetect(char *dom) {
   for (i = 0; i < max; ++i)
     s[i] = 'a' + (rand() % 26);
   s[max] = 'y';
-  s[max+1] = 'c';
-  s[max+2] = 'a';
-  s[max+3] = 'y';
+  s[max + 1] = 'c';
+  s[max + 2] = 'a';
+  s[max + 3] = 'y';
 #if DEBUG
   printf("random subdomain for wildcard testing: %s\n", s);
 #endif
   // random subdomain resolves, thus wildcards are enabled
-  if ((status = getaddrinfo(dom, NULL, &hints, &res)) == 0) {
+  if ((status = getaddrinfo(s, NULL, &hints, &res)) == 0) {
     if (wcard == 0)
       fprintf(stderr, "Warning: wildcard domain configured (2nd test)\n");
     q = NULL;
+    q4 = NULL;
     for (p = res; p != NULL; p = p->ai_next) {
-      if (p->ai_family == AF_INET6) {       // IPv6
+      if (do6 && p->ai_family == AF_INET6) {   // IPv6
         ipv6 = (struct sockaddr_in6 *) p->ai_addr;
         addr = &(ipv6->sin6_addr);
         if (q == NULL || memcmp(&ipv6->sin6_addr, &q->sin6_addr, 16) != 0) {
@@ -146,7 +183,27 @@ unsigned short int wildcarDetect(char *dom) {
             }
           }
         }
+      } else if (do4 && p->ai_family == AF_INET) {
+        ipv4 = (struct sockaddr_in *) p->ai_addr;
+        addr4 = &(ipv4->sin_addr);
+        if (q4 == NULL || memcmp(&ipv4->sin_addr, &q4->sin_addr, 4) != 0) {
+          q4 = ipv4;
+          if (wcard4 < MAX_WCARD) {
+            k = 1;
+            if (wcard4 > 0)
+              for (j = 0; j < wcard4; j++)
+                if (memcmp(wildcardIpStr4[j], addr4, 4) == 0)
+                  k = 0;
+            if (k) {
+              memcpy(wildcardIpStr4[wcard4], addr4, 4);
+              wcard4++;
+              inet_ntop(p->ai_family, addr4, ipv4str, sizeof ipv4str);
+              printf("*.%s -> %s\n", dom, ipv4str);
+            }
+          }
+        }
       }
+
     }
     freeaddrinfo(res);
   }
@@ -173,19 +230,19 @@ unsigned short int dodelay(unsigned short int maxmillisecs) {
 }
 
 // return true if domain is valid, false otherwise
-unsigned short int isValidDomain(char *d) {
+int isValidDomain(char *d) {
   unsigned int i = 0;
   char *tld;
   size_t len;
 
   if (d[strlen(d) - 1] == '.')
     d[strlen(d) - 1] = 0;
-  if (strlen(d) < 4)            // smallest possible domain provided. e.g. a.pl
-    return 0;
+  if (strlen(d) < 4)            // smallest possible domain provided. e.g. a.de
+    return FALSE;
   if (!strstr(d, "."))          // target domain must have at least one dot. e.g. target.va, branch.target.va
-    return 0;
+    return FALSE;
   if (strlen(d) > 100)
-    return 0;
+    return FALSE;
   tld = strstr(d, ".");
   tld = tld + 1;
   while (strstr(tld, ".")) {
@@ -202,7 +259,7 @@ unsigned short int isValidDomain(char *d) {
   len = strlen(d);
   for (i = 0; i < len; ++i) {
     if (!(d[i] >= '0' && d[i] <= '9') && !(d[i] >= 'a' && d[i] <= 'z') && !(d[i] >= 'A' && d[i] <= 'Z') && !(d[i] >= '-' && d[i] <= '.'))
-      return 0;
+      return FALSE;
   }
   return TRUE;
 }
@@ -258,116 +315,312 @@ unsigned short int usesOpenDNS(char *ipstr) {
 void threaded_resolve(char *list[]) {
   unsigned short int i = 0, j, k;
   char dom[MAXSTRSIZE] = "";
-  void *addr;
+  void *addr, *addr4;
   struct addrinfo hints, *res, *p;
-  int status;
-  char ipv6str[INET6_ADDRSTRLEN];
+  int status, found2;
+  char ipv6str[INET6_ADDRSTRLEN], ipv4str[16];
   struct sockaddr_in6 *ipv6, *q;
+  struct sockaddr_in *ipv4, *q4;
 
   memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_INET6;   // AF_INET or AF_INET6 to force version
-//  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_family = dof;   // AF_INET or AF_INET6 to force version
 
   while (list[i] != NULL && list[i][0] != 0) {
-      strncpy(dom, list[i], MAXSTRSIZE - 1);
-      dom[MAXSTRSIZE - 1] = 0;
-      strncat(dom, ".", MAXSTRSIZE - strlen(dom) - 1);  //TEST
-      strncat(dom, domain, MAXSTRSIZE - strlen(dom) - 1);
+    strncpy(dom, list[i], MAXSTRSIZE - 1);
+    dom[MAXSTRSIZE - 1] = 0;
+    strncat(dom, ".", MAXSTRSIZE - strlen(dom) - 1);
+    strncat(dom, domain, MAXSTRSIZE - strlen(dom) - 1);
 #if DEBUG
-      printf("brute-forced domain: %s\n", dom);
+    printf("brute-forced domain: %s\n", dom);
 #endif
-      // ipv6 code modded from www.kame.net
-      if ((status = getaddrinfo(dom, NULL, &hints, &res)) == 0) {
-        q = NULL;
-        for (p = res; p != NULL; p = p->ai_next) {
-          if (p->ai_family == AF_INET6) {       // IPv6
-            ipv6 = (struct sockaddr_in6 *) p->ai_addr;
-            addr = &(ipv6->sin6_addr);
-            // convert the IP to a string and print it:
-            if (q == NULL || memcmp(&ipv6->sin6_addr, &q->sin6_addr, 16) != 0) {
-              q = ipv6;
-              k = 1;
-              if (wcard)
-                for (j = 0; j < wcard; j++)
-                  if (memcmp(addr, wildcardIpStr[j], 16) == 0)
-                    k = 0;
-              if (k) {
+    // ipv6 code modded from www.kame.net
+    if ((status = getaddrinfo(dom, NULL, &hints, &res)) == 0) {
+      q = NULL;
+      q4 = NULL;
+      found2 = 0;
+      for (p = res; p != NULL; p = p->ai_next) {
+        if (do6 && p->ai_family == AF_INET6) { // IPv6
+          ipv6 = (struct sockaddr_in6 *) p->ai_addr;
+          addr = &(ipv6->sin6_addr);
+          // convert the IP to a string and print it:
+          if (q == NULL || memcmp(&ipv6->sin6_addr, &q->sin6_addr, 16) != 0) {
+            q = ipv6;
+            k = 1;
+            if (wcard)
+              for (j = 0; j < wcard; j++)
+                if (memcmp(addr, wildcardIpStr[j], 16) == 0)
+                  k = 0;
+            if (k) {
+              if (found2 == 0) {
                 ++found;
-                inet_ntop(p->ai_family, addr, ipv6str, sizeof ipv6str);
-                printf("%s => %s\n", dom, ipv6str);
-                ++ipCount;
-                if (ucount < MAX_UNIQUE) {
-                  if (ucount)
-                    for (j = 0; j < ucount; j++)
-                       if (memcmp(addr, unique[j], 16) == 0)
-                         k = 0;
-                  if (k) {
-                    memcpy(unique[ucount], addr, 16);
-                    ucount++;
-                  }
+                found2 = 1;
+              }
+              inet_ntop(p->ai_family, addr, ipv6str, sizeof ipv6str);
+              printf("%s => %s\n", dom, ipv6str);
+              ++ipCount;
+              if (ucount < MAX_UNIQUE) {
+                if (ucount)
+                  for (j = 0; j < ucount; j++)
+                    if (memcmp(addr, unique[j], 16) == 0)
+                      k = 0;
+                if (k) {
+                  memcpy(unique[ucount], addr, 16);
+                  ucount++;
+                }
+              }
+            }
+          }
+        } else if (do4 && p->ai_family == AF_INET) {
+          ipv4 = (struct sockaddr_in *) p->ai_addr;
+          addr4 = &(ipv4->sin_addr);
+          if (q4 == NULL || memcmp(&ipv4->sin_addr, &q4->sin_addr, 4) != 0) {
+            q4 = ipv4;
+            k = 1;
+            if (wcard4)
+              for (j = 0; j < wcard4; j++)
+                if (memcmp(wildcardIpStr4[j], addr4, 4) == 0)
+                  k = 0;
+            if (k) {
+              if (found2 == 0) {
+                ++found;
+                found2 = 1;
+              }
+              inet_ntop(p->ai_family, addr4, ipv4str, sizeof ipv4str);
+              printf("%s -> %s\n", dom, ipv4str);
+              ++ipCount4;
+              if (ucount4 < MAX_UNIQUE) {
+                if (ucount4)
+                  for (j = 0; j < ucount4; j++)
+                    if (memcmp(addr4, unique4[j], 4) == 0)
+                      k = 0;
+                if (k) {
+                  memcpy(unique4[ucount4], addr4, 4);
+                  ucount4++;
                 }
               }
             }
           }
         }
-        freeaddrinfo(res);      // free the linked list
-      }                         // end of if conditional
-      // user wants delay between DNS requests?
-      if (delay)
-        dodelay(milliseconds);
-      i++;
-    }
+
+      }
+      freeaddrinfo(res);        // free the linked list
+    }                           // end of if conditional
+    // user wants delay between DNS requests?
+    if (delay)
+      dodelay(milliseconds);
+    i++;
+  }
   return;
 }
 
+// there be dragons. This might have a buffer overflow in here if the dns
+// server sends a malformed DNS reply. luckily we dont copy anything here.
+void dump_dns(char *dom, int type) {
+  int len, cnt, i, j, found = 0, found4 = 0, allfound = 0, found2;
+  unsigned char vbuf[1500], *vptr = vbuf + 2;
+  char dbuf[256], fbuf[256][256];
+  struct addrinfo hints, *res, *p;
+  struct sockaddr_in6 *ipv6, *q;
+  char ipv6str[INET6_ADDRSTRLEN], ipv4str[16];
+  struct sockaddr_in *ipv4, *q4;
+  void *addr, *addr4;
+
+  memset((char *) &hints, 0, sizeof(hints));
+  hints.ai_family = dof;
+  if (((len = res_query(dom, ns_c_in, type, vbuf, sizeof(vbuf))) < (30 + strlen(dom))) || ((*vptr & 0x82) != 0x80) || ((*(vptr + 1) & 0x0f) != 0)) {
+    fprintf(stderr, "Warning: no %s information found\n", type == ns_t_ns ? "name server (NS)" : "mail sever (MX)");
+    return;
+  }
+  vptr += 4;
+  cnt = *vptr * 256 + *(vptr + 1);
+  if (cnt < 1 || cnt > 16) {
+    fprintf(stderr, "Warning: no %s information found\n", type == ns_t_ns ? "name server (NS)" : "mail sever (MX)");
+    return;
+  }
+  vptr += 6;
+  vptr += strlen(dom) + 1;
+  vptr += 4;
+  // we are no at the beginning of the answer section
+  do {
+    vptr += 10;
+    if (type == ns_t_mx)
+      vptr += 2;
+    dbuf[0] = 0;
+    dn_expand(vbuf, vbuf + len, vptr + 2, dbuf, sizeof(dbuf));
+#if DEBUG
+    printf("Found %s for %s: %s\n", type == ns_t_mx ? "MX" : "NS", dom, dbuf);
+#endif
+    if (vptr < vbuf + len && dbuf[0] != 0) {    // BOF protection
+      dbuf[255] = 0;
+      i = 0;
+      if (allfound > 0) {
+        for (j = 0; j < allfound; j++)
+          if (strcmp(dbuf, fbuf[j]) == 0)
+            i = 1;
+      }
+      strcpy(fbuf[allfound], dbuf);
+      allfound++;
+      if (i == 0 && getaddrinfo(dbuf, NULL, &hints, &res) == 0) {
+        q = NULL;
+        q4 = NULL;
+        found2 = 0;
+        for (p = res; p != NULL; p = p->ai_next) {
+          if (do6 && p->ai_family == AF_INET6) {       // IPv6
+            ipv6 = (struct sockaddr_in6 *) p->ai_addr;
+            addr = &(ipv6->sin6_addr);
+            if (q == NULL || memcmp(&ipv6->sin6_addr, &q->sin6_addr, 16) != 0) {
+              q = ipv6;
+              // convert the IP to a string and print it:
+              inet_ntop(p->ai_family, addr, ipv6str, sizeof ipv6str);
+              printf("%s of %s is %s. => %s\n", type == ns_t_mx ? "MX" : "NS", dom, dbuf, ipv6str);
+              if (found2 == 0) {
+                ++found;
+                found2 = 1;
+              }
+            }
+          } else if (do4 && p->ai_family == AF_INET) { // IPv4
+            ipv4 = (struct sockaddr_in *) p->ai_addr;
+            addr4 = &(ipv4->sin_addr);
+            if (q4 == NULL || memcmp(&ipv4->sin_addr, &q4->sin_addr, 4) != 0) {
+              q4 = ipv4;
+              // convert the IP to a string and print it:
+              inet_ntop(p->ai_family, addr4, ipv4str, sizeof ipv4str);
+              printf("%s of %s is %s. -> %s\n", type == ns_t_mx ? "MX" : "NS", dom, dbuf, ipv4str);
+              if (found2 == 0) {
+                ++found4;
+                found2 = 1;
+              }
+            }
+          }
+
+        }
+        freeaddrinfo(res);
+      }
+    }
+    if (type == ns_t_ns)
+      vptr += vptr[1] + 2;
+    else
+      vptr += vptr[-1];
+    cnt--;
+  } while (vptr < vbuf + len && cnt > 0);
+  if (found == 0 && do6)
+    printf("No IPv6 address for %s entries found in DNS for domain %s\n", type == ns_t_mx ? "MX" : "NS", dom);
+  if (found4 == 0 && do4)
+    printf("No IPv4 address for %s entries found in DNS for domain %s\n", type == ns_t_mx ? "MX" : "NS", dom);
+}
+
+
 int main(int argc, char *argv[]) {
-  unsigned short int i = 0, j = 0, k, wordlist = FALSE, threads = 8;
+  unsigned short wordlist = FALSE, threads = 8, dumpit = 0, showdns = 0;
   unsigned long int wcount = 0;
-  char dom[MAXSTRSIZE] = "", *wordlistFilename, invalidTldIpstr[INET_ADDRSTRLEN] = "";
+  int i = 0, j, k;
+  char dom[MAXSTRSIZE] = "", *wordlistFilename = NULL, invalidTldIpstr[INET_ADDRSTRLEN] = "";
   FILE *fpWords;
-  char ***lists;
+  char ***lists, typ = 't';
   unsigned short int listptr[MAX_THREADS];
   pthread_t thread[MAX_THREADS];
 
+  setvbuf(stdout, NULL, _IONBF, 0);
+  setvbuf(stderr, NULL, _IONBF, 0);
+  
+  do4 = 1;
+  do6 = 1;
+  if (argv[0] != NULL && argv[0][0] != 0)
+    typ = argv[0][strlen(argv[0]) - 1];
+  if (typ == '4')
+    do6 = 0;
+  if (typ == '6')
+    do4 = 0;
+
   if (argc < 2 || strncmp(argv[1], "-h", 2) == 0 || strncmp(argv[1], "--h", 3) == 0)
     help(argv[0]);
-
-  if (strcmp(argv[1], "-t") == 0) {
-    threads = atoi(argv[2]);
-    if (threads < 1 || threads > MAX_THREADS) {
-      fprintf(stderr, "Error: -t THREADS must be between 1 and %d: %s\n", MAX_THREADS, argv[2]);
+  
+  while ((i = getopt(argc, argv, "dt:smlxD46")) >= 0) {
+    switch (i) {
+    case '4':
+      do4 = 1;
+      break;
+    case '6':
+      do6 = 1;
+      break;
+    case 'd':
+      showdns = 1;
+      break;
+    case 't':
+      threads = atoi(optarg);
+      break;
+    case 's':
+      sub = (char **) sub_small;
+      break;
+    case 'm':
+      sub = (char **) sub_medium;
+      break;
+    case 'l':
+      sub = (char **) sub_large;
+      break;
+    case 'x':
+      sub = (char **) sub_xtreme;
+      break;
+    case 'D':
+      dumpit = 1;
+      break;
+    default:
+      fprintf(stderr, "Error: unknown option -%c\n", i);
       exit(-1);
     }
-    argc -= 2;
-    argv += 2;
   }
 
-  if (argc > 1 && strcmp(argv[1], "-D") == 0) {
+  if (do4 && do6)
+    dof = 0;
+  else if (do4 && do6 == 0)
+    dof = AF_INET;
+  else
+    dof = AF_INET6;
+
+  if (threads > MAX_THREADS) {
+    threads = MAX_THREADS;
+    fprintf(stderr, "Warning: setting threats to maximum of %d\n", threads);
+  }
+
+  if (dumpit) {
     i = 0;
     while (sub[i] != NULL && sub[i][0] != 0)
       printf("%s\n", sub[i++]);
     exit(0);
   }
 
-  if (argc == 3) {
-    wordlist = TRUE;
-    wordlistFilename = argv[2];
-  }
-
-  if (argc < 2 || argc > 3) {
+  if (argc == optind || argc > optind + 2) {
     fprintf(stderr, "Error: invalid options, try \"-h\" for help!\n");
     exit(-1);
   }
 
-  for (i = 0; argv[1][i]; ++i)  // convert domain to lower case
-    argv[1][i] = (tolower(argv[1][i]));
-#if DEBUG
-  printf("domain: %s\n", argv[1]);
-#endif
+  if (argc > (optind + 1)) {
+    wordlist = TRUE;
+    wordlistFilename = argv[optind + 1];
+  }
 
-  if (!isValidDomain(argv[1])) {
-    fprintf(stderr, "Error: domain seems not to be valid: %s\n", argv[1]);
+  for (i = 0; argv[optind][i]; ++i)     // convert domain to lower case
+    argv[optind][i] = (tolower(argv[optind][i]));
+  strcpy(domain, argv[optind]);
+  if (domain[strlen(domain) - 1] == '.')
+    domain[strlen(domain) - 1] = 0;
+#if DEBUG
+  printf("domain: %s\n", domain);
+#endif
+  if (isValidDomain(domain) < 0) {
+    fprintf(stderr, "Error: domain seems not to be valid: %s\n", domain);
     exit(-1);
+  }
+
+  strcat(domain, ".");
+  if (verifyDomain(domain) != TRUE) {
+    fprintf(stderr, "Error: no name server (NS) entry for domain %s exists\n", domain);
+    exit(-1);
+  }
+
+  if (showdns) {
+    dump_dns(domain, ns_t_ns);
+    dump_dns(domain, ns_t_mx);
   }
 
   lists = malloc(threads * sizeof(int));
@@ -377,12 +630,12 @@ int main(int argc, char *argv[]) {
   }
 
   // split wordlist to thread lists
-  if (wordlist) {
+  if (wordlist == TRUE) {
     fpWords = fopen(wordlistFilename, "r");
     if (fpWords) {
       i = 0;
       while (!feof(fpWords)) {
-        j = fscanf(fpWords, "%100s", dom);  // wordlist subdomain not allowed to be more than 100 chars
+        j = fscanf(fpWords, "%100s", dom);      // wordlist subdomain not allowed to be more than 100 chars
         // put in list here
         lists[i][listptr[i]] = malloc(strlen(dom) + 1);
         strcpy(lists[i][listptr[i]], dom);
@@ -415,33 +668,31 @@ int main(int argc, char *argv[]) {
     }
   }
   for (k = 0; k < threads; k++) {
-      lists[k][listptr[k]] = malloc(2);
-      lists[k][listptr[k]][0] = 0;
-      lists[k][listptr[k + 1]] = NULL;
+    lists[k][listptr[k]] = malloc(2);
+    lists[k][listptr[k]][0] = 0;
+    lists[k][listptr[k + 1]] = NULL;
   }
 
-  strcpy(domain, argv[1]);
-  strcat(domain, ".");
   if (wcount < threads)
     threads = wcount;
-
-  printf("Starting enumerating %s - creating %d threads for %d words...\n", domain, threads, (int)wcount);
-  printf("Estimated time to completion: %d to %d minute%s\n\n", (int)((wcount / 300) / threads) + 1, (int)((wcount / 90) / threads) + 1, ((wcount / 60) / threads) + 1 > 1 ? "s" : "");
-
+  printf("Starting enumerating %s - creating %d threads for %d words...\n", domain, threads, (int) wcount);
+  printf("Estimated time to completion: %d to %d minute%s\n\n", (int) ((wcount / 300) / threads) + 1, (int) ((wcount / 90) / threads) + 1,
+         ((wcount / 60) / threads) + 1 > 1 ? "s" : "");
   // openDNS detection
   if (usesOpenDNS(invalidTldIpstr))
     printf("Detected openDNS, this might increase performance\n");
-
   // wildcard detection
   wildcarDetect(domain);
-
   for (i = 0; i < threads; i++)
-    pthread_create(&thread[i], NULL, (void*)threaded_resolve, (void*)lists[i]);
-
+    pthread_create(&thread[i], NULL, (void *) threaded_resolve, (void *) lists[i]);
   for (i = 0; i < threads; i++)
     pthread_join(thread[i], NULL);
-
-  printf("\nFound %d domain name%s and %d unique ipv6 address%s for %s\n", found, found == 1 ? "" : "s", ucount + wcard, (ucount + wcard) == 1 ? "" : "es", domain);
-
+  if (do4 && do6)
+    printf("\nFound %d domain name%s, %d unique ipv4 and %d unique ipv6 addresses for %s\n", found, found == 1 ? "" : "s", ucount4 + wcard4, ucount + wcard, domain);
+  else if (do4)
+    printf("\nFound %d domain name%s and %d unique ipv4 address%s for %s\n", found, found == 1 ? "" : "s", ucount4 + wcard4, (ucount4 + wcard4) == 1 ? "" : "s", domain);
+  else
+    printf("\nFound %d domain name%s and %d unique ipv6 address%s for %s\n", found, found == 1 ? "" : "s", ucount + wcard, (ucount + wcard) == 1 ? "" : "s", domain);
+  
   return 0;
 }

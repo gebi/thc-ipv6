@@ -16,23 +16,25 @@ char *multicast6 = NULL;
 int empty = 0;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s [-r] [-l] interface add|delete|query [multicast-address [target-address [ttl [own-ip [own-mac-address [destination-mac-address]]]]]]\n\n", prg);
   printf("Ad(d)vertise or delete yourself - or anyone you want - in a multicast group of your choice\n");
   printf("Query ask on the network who is listening to multicast addresses\n");
-  printf("Use -l to loop and send (in 5s intervals) until Control-C is pressed.\nUse -r to use raw mode.\n\n");
+  printf("Use -l to loop and send (in 5s intervals) until Control-C is pressed.\n");
+//  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
-void check_packets(u_char *foo, const struct pcap_pkthdr *header, const unsigned char *data) {
-  unsigned char *ptr = (unsigned char *)data;
+void check_packets(u_char * foo, const struct pcap_pkthdr *header, const unsigned char *data) {
+  unsigned char *ptr = (unsigned char *) data;
+
   if (rawmode == 0)
     ptr += 14;
   if (debug)
-    thc_dump_data(ptr, header->caplen - 14 + 14*rawmode, "Received Packet");
-  if (ptr[6] == 0 && ptr[40] == 0x3a && ptr[41] == 0 && ptr[42] == 5 && ptr[48] == ICMP6_MLD_REPORT && header->caplen - 14 + 14*rawmode >= 72)
+    thc_dump_data(ptr, header->caplen - 14 + 14 * rawmode, "Received Packet");
+  if (ptr[6] == 0 && ptr[40] == 0x3a && ptr[41] == 0 && ptr[42] == 5 && ptr[48] == ICMP6_MLD_REPORT && header->caplen - 14 + 14 * rawmode >= 72)
     if (empty == 1 || memcmp(multicast6, ptr + 56, 16) == 0)
-      printf("MLD Report: %s is listening on %s\n", thc_string2notation(thc_ipv62string(ptr + 8)), thc_string2notation(thc_ipv62string(ptr + 56)));
+      printf("MLD Report: %s is listening on %s\n", thc_ipv62notation(ptr + 8), thc_ipv62notation(ptr + 56));
 }
 
 int main(int argc, char *argv[]) {
@@ -89,16 +91,15 @@ int main(int argc, char *argv[]) {
     if (i == 0)
       empty = 1;
   }
-  if (argv[4] != NULL && argc > 4) 
+  if (argv[4] != NULL && argc > 4)
     dst6 = thc_resolve6(argv[4]);
-  else
-    if (mode == ICMP6_MLD_QUERY) {
-      if (memcmp(multicast6, buf, 16))
-        dst6 = multicast6;
-      else
-        dst6 = thc_resolve6("ff02::1");
-    } else
-      dst6 = thc_resolve6("ff02::2");
+  else if (mode == ICMP6_MLD_QUERY) {
+    if (memcmp(multicast6, buf, 16))
+      dst6 = multicast6;
+    else
+      dst6 = thc_resolve6("ff02::1");
+  } else
+    dst6 = thc_resolve6("ff02::2");
   if (argv[5] != NULL && argc > 5)
     ttl = atoi(argv[5]);
   if (argv[6] != NULL && argc > 6)
@@ -107,11 +108,13 @@ int main(int argc, char *argv[]) {
     src6 = thc_get_own_ipv6(interface, dst6, PREFER_LINK);
   if (rawmode == 0) {
     if (argv[7] != NULL && argc > 7)
-      sscanf(argv[7], "%x:%x:%x:%x:%x:%x", (unsigned int*)&srcmac[0], (unsigned int*)&srcmac[1], (unsigned int*)&srcmac[2], (unsigned int*)&srcmac[3], (unsigned int*)&srcmac[4], (unsigned int*)&srcmac[5]);
+      sscanf(argv[7], "%x:%x:%x:%x:%x:%x", (unsigned int *) &srcmac[0], (unsigned int *) &srcmac[1], (unsigned int *) &srcmac[2], (unsigned int *) &srcmac[3],
+             (unsigned int *) &srcmac[4], (unsigned int *) &srcmac[5]);
     else
       mac = thc_get_own_mac(interface);
     if (argv[8] != NULL && argc > 8)
-      sscanf(argv[8], "%x:%x:%x:%x:%x:%x", (unsigned int*)&dstmac[0], (unsigned int*)&dstmac[1], (unsigned int*)&dstmac[2], (unsigned int*)&dstmac[3], (unsigned int*)&dstmac[4], (unsigned int*)&dstmac[5]);
+      sscanf(argv[8], "%x:%x:%x:%x:%x:%x", (unsigned int *) &dstmac[0], (unsigned int *) &dstmac[1], (unsigned int *) &dstmac[2], (unsigned int *) &dstmac[3],
+             (unsigned int *) &dstmac[4], (unsigned int *) &dstmac[5]);
     else
       dmac = NULL;
   }
@@ -136,13 +139,13 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: Can not generate packet, exiting ...\n");
     exit(-1);
   }
-  
+
   printf("Sending packet%s for %s%s\n", loop ? "s" : "", empty ? "::" : argv[3], loop ? " (Press Control-C to end)" : "");
   do {
     thc_send_pkt(interface, pkt1, &pkt1_len);
     sleep(5);
     if (mode == ICMP6_MLD_QUERY)
-      while (thc_pcap_check(p, (char*) check_packets, NULL));
+      while (thc_pcap_check(p, (char *) check_packets, NULL));
   } while (loop);
-  return 0; // never reached
+  return 0;                     // never reached
 }

