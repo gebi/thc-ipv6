@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH THC-IPV6 8 "May 2010"
+.TH THC-IPV6 8 "May 2011"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -80,7 +80,7 @@ Smurfs the local network of the victim. Note: this depends on an
 implementation error, currently only verified on Linux (fixed in current versions).
 Evil: "ff02::1" as victim will DOS your local LAN completely
 
-.B test_implementation6 [-r] <interface> <destination> [test-case-number]
+.B implementation6 [-r] <interface> <destination> [test-case-number]
 Performs some ipv6 implementation checks
 
 .B sendpees6 <interface> <key_length> <prefix> <victim-ip>

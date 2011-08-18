@@ -1,3 +1,4 @@
+
 /*
  * Test:
  *       1. next header = hopbyhop, but no header
@@ -37,32 +38,32 @@ int rawmode = 0;
 int cont = 0;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s [-r] interface\n\n", prg);
   printf("Identifies test packets by the implementation6 tool, useful to check what\n");
   printf("packets passed a firewall\n");
-  printf("Use -r to use raw mode.\n\n");
+//  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
-void check_packet(u_char *foo, const struct pcap_pkthdr *header, const unsigned char *data) {
+void check_packet(u_char * foo, const struct pcap_pkthdr *header, const unsigned char *data) {
   unsigned char *ipv6hdr;
   unsigned char buf[20];
   int add = 0;
 
   if (debug) {
     printf("DEBUG: packet received\n");
-    thc_dump_data((unsigned char *)data, header->caplen, "Received Packet");
+    thc_dump_data((unsigned char *) data, header->caplen, "Received Packet");
   }
-  
+
   if (rawmode == 0)
-    ipv6hdr = (unsigned char *)(data + 14);
+    ipv6hdr = (unsigned char *) (data + 14);
   else
-    ipv6hdr = (unsigned char *)data;
-  
+    ipv6hdr = (unsigned char *) data;
+
   if (ipv6hdr[0] >> 4 != 6)
-    return; // not an ipv6 packet
-  
+    return;                     // not an ipv6 packet
+
   if (ipv6hdr[6] == NXT_ICMP6 && (ipv6hdr[40] == ICMP6_NEIGHBORSOL || ipv6hdr[40] == ICMP6_NEIGHBORADV || ipv6hdr[40] == ICMP6_PARAMPROB || ipv6hdr[40] == ICMP6_TTLEXEED))
     return;
 
@@ -80,58 +81,58 @@ void check_packet(u_char *foo, const struct pcap_pkthdr *header, const unsigned 
       return;
     }
   }
-  
+
   if (header->caplen > 60) {
-    switch(ipv6hdr[6]) {
-      case NXT_ICMP6:
-          if (1==1) {
-            switch(ipv6hdr[40]) {
-              case ICMP6_PINGREQUEST:
-                  if (ipv6hdr[44] == 0x34 && ipv6hdr[45] == 0x56 && ipv6hdr[46] == 0x78 && ipv6hdr[47] == 0x90 && ipv6hdr[52] == 'A') {
-                    printf("   Detected (potential) implementation6 standard thc-ipv6 ping request%s\n", cont == -1 ? " (cont'd)" : "");
-                    cont = -1;
-                  }
-                  return;
-                break;
-              case ICMP6_INFOREQUEST:
-                  if (ipv6hdr[48] == 20 + add) {
-                    printf("   Detected (potential) implementation6 test case #%d\n", 20 + add);
-                    cont = 0;
-                  }
-                  return;
-                break;
-              case ICMP6_INVNEIGHBORSOL:
-                  printf("   Detected (potential) implementation6 test case #%d\n", 21 + add);
-                  cont = 0;
-                  return;
-                break;
-              case ICMP6_CERTPATHSOL:
-                  if (ipv6hdr[45] == 23 + add) {
-                    printf("   Detected (potential) implementation6 test case #%d\n", 23 + add);
-                    cont = 0;
-                  }
-                  return;
-                break;
-              default:
-                break;
-            }
+    switch (ipv6hdr[6]) {
+    case NXT_ICMP6:
+      if (1 == 1) {
+        switch (ipv6hdr[40]) {
+        case ICMP6_PINGREQUEST:
+          if (ipv6hdr[44] == 0x34 && ipv6hdr[45] == 0x56 && ipv6hdr[46] == 0x78 && ipv6hdr[47] == 0x90 && ipv6hdr[52] == 'A') {
+            printf("   Detected (potential) implementation6 standard thc-ipv6 ping request%s\n", cont == -1 ? " (cont'd)" : "");
+            cont = -1;
           }
+          return;
+          break;
+        case ICMP6_INFOREQUEST:
+          if (ipv6hdr[48] == 20 + add) {
+            printf("   Detected (potential) implementation6 test case #%d\n", 20 + add);
+            cont = 0;
+          }
+          return;
+          break;
+        case ICMP6_INVNEIGHBORSOL:
+          printf("   Detected (potential) implementation6 test case #%d\n", 21 + add);
+          cont = 0;
+          return;
+          break;
+        case ICMP6_CERTPATHSOL:
+          if (ipv6hdr[45] == 23 + add) {
+            printf("   Detected (potential) implementation6 test case #%d\n", 23 + add);
+            cont = 0;
+          }
+          return;
+          break;
+        default:
+          break;
+        }
+      }
+      return;
+      break;
+    case NXT_OPTS:
+      if (ipv6hdr[64] == ICMP6_MOBILE_PREFIXSOL) {
+        if (ipv6hdr[69] == 22 + add) {
+          printf("   Detected (potential) implementation6 test case #%d\n", 22 + add);
+          cont = 0;
+        }
         return;
-        break;
-      case NXT_OPTS:
-            if (ipv6hdr[64] == ICMP6_MOBILE_PREFIXSOL) {
-              if (ipv6hdr[69] == 22 + add) {
-                printf("   Detected (potential) implementation6 test case #%d\n", 22 + add);
-                cont = 0;
-              }
-              return;
-            }
-        break;
-      default:
-        break;
+      }
+      break;
+    default:
+      break;
     }
-  } 
-  
+  }
+
   return;
 }
 
@@ -154,7 +155,7 @@ int main(int argc, char *argv[]) {
   setvbuf(stdout, NULL, _IONBF, 0);
 
   printf("Waiting for implementation check packets on %s, press Control-C to end.\n", interface);
-  if (thc_pcap_function(interface, string, (char*) check_packet, NULL) < 0) {
+  if (thc_pcap_function(interface, string, (char *) check_packet, NULL) < 0) {
     fprintf(stderr, "Error: could not capture on interface %s with string %s\n", interface, string);
     exit(-1);
   }
@@ -162,4 +163,3 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
-

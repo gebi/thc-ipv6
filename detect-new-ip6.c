@@ -20,29 +20,28 @@ char *ptr3, *ptr4;
 int i;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s interface [script]\n\n", prg);
   printf("This tools detects new ipv6 addresses joining the local network.\n");
   printf("If script is supplied, it is executed with the detected IPv6 address as option\n\n");
   exit(-1);
 }
 
-void intercept(u_char *foo, const struct pcap_pkthdr *header, const unsigned char *data) {
-  unsigned char *ipv6hdr = (unsigned char *)(data + 14);
+void intercept(u_char * foo, const struct pcap_pkthdr *header, const unsigned char *data) {
+  unsigned char *ipv6hdr = (unsigned char *) (data + 14);
 
   if (debug) {
     printf("DEBUG: packet received\n");
-    thc_dump_data((unsigned char *)data, header->caplen, "Received Packet");
+    thc_dump_data((unsigned char *) data, header->caplen, "Received Packet");
   }
   if (ipv6hdr[6] != NXT_ICMP6 || ipv6hdr[40] != ICMP6_NEIGHBORSOL || header->caplen < 78)
     return;
-  if (*(data+22) + *(data+23) + *(data+24) + *(data+25) + *(data+34) + *(data+35) + *(data+36) + *(data+37) != 0)
+  if (*(data + 22) + *(data + 23) + *(data + 24) + *(data + 25) + *(data + 34) + *(data + 35) + *(data + 36) + *(data + 37) != 0)
     return;
   if (debug)
     printf("DEBUG: packet is a valid duplicate ip6 check via icmp6 neighbor solitication\n");
 
-  ptr3 = thc_ipv62string((char*)(data + 62));
-  ptr4 = thc_string2notation(ptr3);
+  ptr4 = thc_ipv62notation((char *) (data + 62));
   printf("Detected new ip6 address: %s\n", ptr4);
 
   if (script != NULL && fork() == 0) {
@@ -51,8 +50,8 @@ void intercept(u_char *foo, const struct pcap_pkthdr *header, const unsigned cha
       fprintf(stderr, "Error: Executing failed - %s\n", es);
     exit(0);
   }
-  
-  free(ptr3); free(ptr4);
+
+  free(ptr4);
   (void) wait3(NULL, WNOHANG, NULL);
   return;
 }
@@ -69,6 +68,9 @@ int main(int argc, char *argv[]) {
       exit(-1);
     }
   }
+
+  setvbuf(stdout, NULL, _IONBF, 0);
+  setvbuf(stderr, NULL, _IONBF, 0);
 
   printf("Started ICMP6 DAD detection (Press Control-C to end) ...\n");
   return thc_pcap_function(interface, "ip6", (char *) intercept, NULL);

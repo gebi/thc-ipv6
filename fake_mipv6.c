@@ -15,11 +15,11 @@ unsigned char buf[64];
 int buf_len = 0;
 
 void help(char *prg) {
-  printf("%s %s (c) 2010 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
+  printf("%s %s (c) 2011 by %s %s\n\n", prg, VERSION, AUTHOR, RESOURCE);
   printf("Syntax: %s [-r] interface home-address home-agent-address care-of-address\n\n", prg);
   printf("If the mobile IPv6 home-agent is mis-configured to accept MIPV6 updates without\n");
   printf("IPSEC, this will redirect all packets for home-address to care-of-address\n");
-  printf("Use -r to use raw mode.\n\n");
+//  printf("Use -r to use raw mode.\n\n");
   exit(-1);
 }
 
@@ -85,9 +85,9 @@ int main(int argc, char *argv[]) {
       return -1;
 
     thc_generate_and_send_pkt(interface, NULL, mac, pkt1, &pkt1_len);
-    
+
     id += 16384;
   }
-  
+
   return 0;
 }

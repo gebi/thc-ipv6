@@ -8,14 +8,131 @@ email to vh (at) thc (dot) org , with "thc-ipv6 antispam" in the
 subject line.
 
 
+v1.8 - PUBLIC
+ ! I am in a good mood, only the alive26, the advanced alive scanner is
+ ! not in the package, so enoy lot of new powerful tools, plus most existing
+ ! ones have been enhanced. Now there are 40 tools! Have fun on the CCC Camp!
+ + Upcoming: even better fake_router6, and final death stroke to RA guard /
+ +           NDP security
+ 
+ * added new tool sendpeesmp6 by Marcin Pohl
+ * added new tool randicmp6 by ecore
+ * added new tool ndpexhaust6 by Mario Fleischmann
+ * added two alternate alive6/parasite6 tools by Fabricio Nogueira Buzeto
+   and Carlos Botelho De Paula Filho, it can be found in the contrib/ directory
+ * added new tool flood_solicitate6
+ * added new tool kill_router6
+ * added new tool fake_dnsupdate6
+ * added new tool node_query6
+ * added new tool dump_router6
+ * added helper scripts extract_{network,host}s.sh
+ * new in public version: fake_dhcps6
+ * new in public version: flood_dhcpc6
+ * new in public version: fake_dns6d
+ * new in public version: fake_dnsupdate6
+ * new in public version: fragmentation6 (fragmentation test tool)
+ * fake_advertise6: added one more ND Security bypass (-D)
+ * fake_router6:
+     - added unicast reply to router solicitation requests
+     - added one more ND Security bypass (-D)
+ * parasite6:
+     - added -R option to also inject the reverse route
+     - added one more ND Security bypass (-D)
+ * flood_router6: one more RA guard bypass (-D)
+ * dnsdict6:
+     - expanded dictionary by results from the ipv6 world day scanning
+     - added IPv4 support for selfish reasons. I'm sorry! ;-)
+ * thcping6:
+     - -D renamed to -F
+     - new -D/-H option to specify options in hopbyhop and destination headers
+     - fragment header moved before other headers (except hop-by-hop)
+ * speed improvements for flood_* tools
+ * thc-ipv6-lib:
+     - fixed class assignment in ipv6 packet creation
+     - forgot some fclose()es thanks to mario fleischmann for reporting
+     - first OS/X porting diff sent in by oskar (at) acm (dot) org, thanks!
 
+
+v1.7 - PRIVATE
+ * ...
+
+
+v1.6 - PUBLIC
+ * removed various tools for public release
+
+
+v1.5 - PRIVATE
+ * redir6: 
+     - TTL enhancement by frederik(at)kriewitz(dot)eu
+     - timing enhancement by me
+ * toobig6: added TTL, timing and packet size enhancement
+ * parasite6:
+     - added -l (loop) option
+     - ND security evasion added :-)
+ * fake_advertise6:
+     - added src ip option
+     - added ND security evasion options
+ * trace6:
+     - added tunnel detection and identification mode (-t)
+     - only up to the 13th hop was reported, fixed
+     - added patch by Phillipe Langlois for -s sourceipv6 option
+ * alive26:
+     - print original dst ports for packet replies
+     - print original dst ipv6 for icmp errors
+     - if -p was specified, sending dst opt error pkt was not disabled
+ * thcping6: rewrote thcping6 for more options and packet timing
+ * fake_router6:
+     - the interface MTU is used as default now
+     - added RA guard evasion options
+ * flood_router6: RA guard evasion options added :-)
+ * frag_id_attack: lots of more tests and cmdline options
+ * implementation6: more test cases
+ * dnsdict6:
+     - implemended 4 different wordlists in dnsdict6 (-s, -m, -l, -x switches)
+     - better wildcard detection
+     - added -d switch to dump IPv6 NS and MX information
+     - added check for -t max
+ * added comfortable dnsdictalive.sh script to dnsbrute+alivescan a domain
+ * thc-ipv6-lib:
+     - added thc_ipv62notation function
+     - added thc_add_hdr_oneshotfragment function
+     - fixed neighbor mac solicitation function for FreeBSD targets
+     - better own ipv6 address selection
+ * added usage of thc_ipv62notation function to all tools
 
 v1.4 - December 2010 - PUBLIC
- * added thcping6
+ * removed various tools for public release
+
+v1.3 - PRIVATE
+ * added covert_send6 and covert_send6d
+ * added fake_dhcps6 - fake dhcp6 server
+ * added flood_dhcpc6 - dhcp6 flooder
+ * added fake_dns6 - fake dns server, serving only one ipv6 address :-)
  * added fake_mld26 (same as fake_mld6 but for MLDv2)
+ * added flood_mld6 - flood network with mld messages
+ * added flood_mld26 - flood network with mldv2 messages
  * added fake_mldrouter6 - fake an mld router
+ * added flood_mldrouter6 - flood network with mld router messages
  * added exploit6 and the first test cases
  * added denial6 and the first test cases
+ * added dos_mld.sh which disables outside multicast traffic to the local LAN
+ * alive6: 
+    - beautified alive ipv6 address output
+    - added -i inputfile and -o outputfile options
+    - added -M for mac enumeration mode (autoconfiguration address space)
+    - added -D for dhcp6 enumeration mode
+    - added range possibility, e.g. "alive6 eth0 2002:0-2:0-10"
+    - added -s/-a-/-u TCP SYN/ACK and UDP alive scan mode
+    - added -F firewall quick port setup mode (tcp-syn to 22, 25, 80, 443;
+       udp dns request; tcp-ack to highport, ping and destination error)
+    - added -p and -e icmp and error alive check modes
+    - changed hop-by-hop error check to destination error check
+    - alive reply type is now printed
+    - printing now warnings if icmp destination unreachables are received (-v)
+    - added new -S slow, -W waittime,-d resolve, -v verbose switches
+    - added new -Z dstmac option
+    - removed hop check, changed to dst hdr, and made it the default
+    - removed memory leaks
  * fake_mld6:
     - added query and done MLD types
     - new command line option -l = loop
@@ -40,13 +157,6 @@ v1.4 - December 2010 - PUBLIC
  * implementation6: added three more test cases, enhanced four test cases, bugfix
  * compile warning fixes (dnsdict6, sendpees6, thc-ipv6-lib)
  * Makefile beautification and header fixes by xmw<at>gentoo<dot>org
- * (covert_send6 and covert_send6d not included)
- * (fake_dhcps6 not included)
- * (flood_dhcpc6 not included)
- * (fake_dns6 not included)
- * (dos_mld not included)
- * (alive6 updates not included)
- * (flood_mld6, flood_mld26 and flood_mldrouter6 not included)
  * library:
     - BUG: raw mode does not work! Needs to be implemented properly by someone :-)
     - imporant fix for gathering a local mac, required for Mac OS/X targets
@@ -61,9 +171,10 @@ v1.4 - December 2010 - PUBLIC
     - fix for beautification ipv6 address output function
     - looked for memory leaks and removed all I found
     - for performance reasons also stale neighbor mac entries are used now
-    - made library thread safe
-
-v1.3 - PRIVATE
+    - made library thread safe, for this to work I:
+       ~ changed thc_pcap_check/thc_pcap_function to add an option
+       ~ removed some global variables
+       => remaining variables are ok to be global
 
 v1.2 - June 2010
  * compile fixes
