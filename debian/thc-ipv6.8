@@ -121,6 +121,51 @@ Craft your special icmpv6 echo request packet.
 .TP
 .B toobig6 [-r] <interface> <target-ip> <existing-ip> <mtu>
 Implants the specified mtu on the target
+.TP
+.B extract_networks6.sh FILE
+prints the networks found in FILE
+.TP
+.B extract_hosts6.sh FILE
+prints the host parts of IPv6 addresses in FILE
+.TP
+.B fake_dhcps6 interface network-address/prefix-length dns-server [dhcp-server-ip-address [mac-address]]
+Fake DHCPv6 server. Use to configure an address and set a DNS server
+.TP
+.B fake_dns6d interface ipv6-address [fake-ipv6-address [fake-mac]]
+Fake DNS server that serves the same ipv6 address to any lookup request
+.TP
+.B fake_dnsupdate6 dns-server full-qualified-host-dns-name ipv6address
+Fake DNS update
+.TP
+.B flood_dhcpc6 [-n|-N] [-1] [-d] interface [domain-name]
+DHCP client flooder. Use to deplete the IP address pool a DHCP6 server is offering.
+.TP
+.B flood_mld26 [-r] interface
+Flood the local network with MLDv2 reports
+.TP
+.B flood_mld6 [-r] interface
+Flood the local network with MLD reports
+.TP
+.B flood_mldrouter6 [-r] interface
+Flood the local network with MLD router advertisements
+.TP
+.B flood_solicitate6 [-r] interface [target]
+Flood the network with neighbor solicitations
+.TP
+.B fragmentation6 [-fp] [-n number] interface destination [test-case-no]
+Performs fragment firewall and implementation checks, incl. denial-of-service.
+.TP
+.B kill_router6 [-HFD] interface router-address [srcmac [dstmac]]
+Announce that a target a router going down to delete it from the routing tables.
+.TP
+.B ndpexhaust6 interface destination-network [sourceip]
+Randomly pings IPs in target network
+.TP
+.B randicmp6 interface destination [source]
+Sends all ICMPv6 type and code combinations to destination
+.TP
+.B sendpeesmp6 <inferface> <key_length> <prefix> <victim>
+Send SEND neighbor solicitation messages and make target to verify a lota CGA and RSA signatures
 .SH SEE ALSO
 .BR nmap (1),
 .BR amap (1),
