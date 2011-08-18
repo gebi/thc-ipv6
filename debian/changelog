@@ -1,3 +1,9 @@
+thc-ipv6 (1.8-1) UNRELEASED; urgency=low
+
+  * [4802002] Imported Upstream version 1.8
+
+ -- Michael Gebetsroither <michael@mgeb.org>  Thu, 18 Aug 2011 19:16:26 +0200
+
 thc-ipv6 (1.4-1) unstable; urgency=low
 
   * [325b41d] New upstream version 1.4 [Closes: issue948]
